@@ -8,34 +8,22 @@ on:
     types: [created]
 
 jobs:
-  install:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    strategy:
-      fail-fast: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-  
   test:
-    needs: install
 #     if: needs.install.result == "success"
     runs-on: ubuntu-latest
     continue-on-error: false
     strategy:
       fail-fast: true
     steps:
-    - name: Test
-      run: |
-        cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Test
+        run: cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
 
   build:
     needs: test
@@ -44,8 +32,27 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-    - name: Build Release
-      run: python setup.py sdist bdist_wheel
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: Build Release
+        run: python setup.py sdist bdist_wheel
+      
+      - name: upload build
+        uses: actions/upload-artifact@v1
+        with:
+          name: build
+          path: build/*
 
   upload:
     needs: build
@@ -54,31 +61,36 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-    - name: Upload Release Asset - wheel
-      id: upload-release-asset-wheel
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OUTFILE: tabixpy-${{ github.ref }}-py3-none-any.whl
-        FILETYPE: application/x-pywheel+zip
-      with:
-        upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: dist/${OUTFILE}
-        asset_name: ${OUTFILE}
-        asset_content_type: ${FILETYPE}
+      - name: Download data
+        uses: actions/download-artifact@v1
+        with:
+          name: build
+      
+      - name: Upload Release Asset - wheel
+        id: upload-release-asset-wheel
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTFILE: tabixpy-${{ github.ref }}-py3-none-any.whl
+          FILETYPE: application/x-pywheel+zip
+        with:
+          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${OUTFILE}
+          asset_name: ${OUTFILE}
+          asset_content_type: ${FILETYPE}
 
-    - name: Upload Release Asset - src
-      id: upload-release-asset-src
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        OUTFILE: tabixpy-${{ github.ref }}.tar.gz
-        FILETYPE: application/tar+gzip
-      with:
-        upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: dist/${OUTFILE}
-        asset_name: ${OUTFILE}
-        asset_content_type: ${FILETYPE}
+      - name: Upload Release Asset - src
+        id: upload-release-asset-src
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTFILE: tabixpy-${{ github.ref }}.tar.gz
+          FILETYPE: application/tar+gzip
+        with:
+          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${OUTFILE}
+          asset_name: ${OUTFILE}
+          asset_content_type: ${FILETYPE}
 
   publish:
     needs: upload
@@ -87,8 +99,21 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-    - name: Publish release
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: twine upload dist/*
+      - name: Download data
+        uses: actions/download-artifact@v1
+        with:
+          name: build
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: pip install twine
+      
+      - name: Publish release
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload tabixpy-${{ github.ref }}*
