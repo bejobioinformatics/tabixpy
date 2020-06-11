@@ -65,16 +65,21 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dist
+          
+      - name: Get tag
+        id: get_tag
+        run: echo ::set-output name=TAG::$(echo $GITHUB_REF | cut -d / -f 3)
       
       - name: Upload Release Asset - wheel
         id: upload-release-asset-wheel
         uses: actions/upload-release-asset@v1
         env:
+          TAG: ${{ steps.get_tag.outputs.TAG }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OUTFILE: tabixpy-${{ github.ref }}-py3-none-any.whl
+          OUTFILE: tabixpy-${{ steps.get_tag.outputs.TAG }}-py3-none-any.whl
           FILETYPE: application/x-pywheel+zip
         with:
-          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           asset_path: ${OUTFILE}
           asset_name: ${OUTFILE}
           asset_content_type: ${FILETYPE}
@@ -83,11 +88,12 @@ jobs:
         id: upload-release-asset-src
         uses: actions/upload-release-asset@v1
         env:
+          TAG: ${{ steps.get_tag.outputs.TAG }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OUTFILE: tabixpy-${{ github.ref }}.tar.gz
+          OUTFILE: tabixpy-${{ steps.get_tag.outputs.TAG }}.tar.gz
           FILETYPE: application/tar+gzip
         with:
-          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           asset_path: ${OUTFILE}
           asset_name: ${OUTFILE}
           asset_content_type: ${FILETYPE}
@@ -116,4 +122,4 @@ jobs:
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: twine upload tabixpy-${{ github.ref }}*
+        run: twine upload tabixpy-*
