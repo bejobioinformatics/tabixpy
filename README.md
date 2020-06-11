@@ -1,7 +1,12 @@
-tabixpy.py
-==========
+tabixpy
+=======
 
 Tabix parser writtern in Python3.
+
+Install
+-------
+
+pip install tabixpy
 
 Tabix
 -----

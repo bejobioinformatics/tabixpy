@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tabixpy-sauloal", # Replace with your own username
+    name="tabixpy", # Replace with your own username
     version="1",
     author="Saulo Aflitos",
     author_email="saulobejo@users.noreply.github.com",
     description="Tabix reader written 100% in Python",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://github.com/bejobioinformatics/tabixpy",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
