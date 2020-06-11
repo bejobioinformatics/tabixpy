@@ -87,27 +87,33 @@ jobs:
           echo ::set-output name=URL::https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}
           ls -la
 
-      - name: Upload Release Asset - wheel
-        id: upload-release-asset-wheel
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.vars.outputs.URL }}/assets{?name,label}
-          asset_path: ${{ steps.vars.outputs.WHEEL }}
-          asset_name: ${{ steps.vars.outputs.WHEEL }}
-          asset_content_type: application/x-pywheel+zip
+        run:
+          hub release create -a "${{ steps.vars.outputs.WHEEL }}" -a "${{ steps.vars.outputs.SRC }}" -m "${{ steps.vars.outputs.TAG }}" "${{ steps.vars.outputs.TAG }}"
 
-      - name: Upload Release Asset - src
-        id: upload-release-asset-src
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.SRC }}
-          asset_path: ${{ steps.vars.outputs.SRC }}
-          asset_name: ${{ steps.vars.outputs.SRC }}
-          asset_content_type: application/tar+gzip
+#       - name: Upload Release Asset - wheel
+#         id: upload-release-asset-wheel
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.vars.outputs.URL }}/assets{?name,label}
+#           asset_path: ${{ steps.vars.outputs.WHEEL }}
+#           asset_name: ${{ steps.vars.outputs.WHEEL }}
+#           asset_content_type: application/x-pywheel+zip
+
+#       - name: Upload Release Asset - src
+#         id: upload-release-asset-src
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.SRC }}
+#           asset_path: ${{ steps.vars.outputs.SRC }}
+#           asset_name: ${{ steps.vars.outputs.SRC }}
+#           asset_content_type: application/tar+gzip
 
   publish:
     needs: upload
