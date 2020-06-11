@@ -74,21 +74,17 @@ jobs:
         with:
           name: dist
           
-      - name: Get tag
-        id: get_tag
-        run: echo ::set-output name=TAG::$(echo $GITHUB_REF | cut -d / -f 3)
-
-      - name: Get version
-        id: get_version
-        run: echo ::set-output name=VERSION::$(cat VERSION)
-        
-      - name: Set wheel
-        id: set_wheel
-        run: echo ::set-output name=NAME::$(echo tabixpy-${{ steps.get_version.outputs.VERSION }}-py3-none-any.whl)
-
-      - name: Set src
-        id: set_src
-        run: echo ::set-output name=NAME::$(echo tabixpy-${{ steps.get_version.outputs.VERSION }}.tar.gz)
+      - name: Gen Vars
+        id: vars
+        run: |
+          export TAG=$(echo $GITHUB_REF | cut -d / -f 3)
+          export VERSION=$(cat VERSION)
+          echo ::set-output name=TAG::$(echo $TAG)
+          echo ::set-output name=VERSION::$(echo $VERSION)
+          echo ::set-output name=WHEEL::$(echo tabixpy-$VERSION-py3-none-any.whl)
+          echo ::set-output name=SRC::$(echo tabixpy-$VERSION.tar.gz)
+          echo ::set-output name=REPO::$(echo ${GITHUB_REPOSITORY})
+          echo ::set-output name=URL::https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}
 
       - name: Upload Release Asset - wheel
         id: upload-release-asset-wheel
@@ -96,9 +92,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ steps.get_tag.outputs.TAG }}/assets?name=${{ steps.set_wheel.outputs.NAME }}
-          asset_path: ./${{ steps.set_wheel.outputs.NAME }}
-          asset_name: ${{ steps.set_wheel.outputs.NAME }}
+          upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.WHEEL }}
+          asset_path: ./${{ steps.vars.outputs.WHEEL }}
+          asset_name: ${{ steps.vars.outputs.WHEEL }}
           asset_content_type: application/x-pywheel+zip
 
       - name: Upload Release Asset - src
@@ -107,9 +103,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases//assets?name=${{ steps.set_src.outputs.NAME }}
-          asset_path: ./${{ steps.set_src.outputs.NAME }}
-          asset_name: ${{ steps.set_src.outputs.NAME }}
+          upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.SRC }}
+          asset_path: ./${{ steps.vars.outputs.SRC }}
+          asset_name: ${{ steps.vars.outputs.SRC }}
           asset_content_type: application/tar+gzip
 
   publish:
