@@ -4,12 +4,17 @@
 name: Upload Python Package
 
 on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10  
   release:
     types: [created]
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10  
 
 jobs:
   test:
-#     if: needs.install.result == "success"
     runs-on: ubuntu-latest
     continue-on-error: false
     strategy:
@@ -42,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          pip install setuptools wheel
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       
       - name: Build Release
@@ -69,14 +74,19 @@ jobs:
       - name: Get tag
         id: get_tag
         run: echo ::set-output name=TAG::$(echo $GITHUB_REF | cut -d / -f 3)
-      
+
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(cat VERSION)
+
       - name: Upload Release Asset - wheel
         id: upload-release-asset-wheel
         uses: actions/upload-release-asset@v1
         env:
           TAG: ${{ steps.get_tag.outputs.TAG }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OUTFILE: tabixpy-${{ steps.get_tag.outputs.TAG }}-py3-none-any.whl
+          OUTFILE: tabixpy-${{ steps.get_version.outputs.VERSION }}-py3-none-any.whl
           FILETYPE: application/x-pywheel+zip
         with:
           upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
@@ -89,8 +99,9 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           TAG: ${{ steps.get_tag.outputs.TAG }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OUTFILE: tabixpy-${{ steps.get_tag.outputs.TAG }}.tar.gz
+          OUTFILE: tabixpy-${{ steps.get_version.outputs.VERSION }}.tar.gz
           FILETYPE: application/tar+gzip
         with:
           upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}/assets?name=${OUTFILE} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
