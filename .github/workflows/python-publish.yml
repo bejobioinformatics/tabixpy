@@ -94,7 +94,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.URL }}/assets{?name,label}
-          asset_path: ./${{ steps.vars.outputs.WHEEL }}
+          asset_path: ${{ steps.vars.outputs.WHEEL }}
           asset_name: ${{ steps.vars.outputs.WHEEL }}
           asset_content_type: application/x-pywheel+zip
 
@@ -105,7 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.SRC }}
-          asset_path: ./${{ steps.vars.outputs.SRC }}
+          asset_path: ${{ steps.vars.outputs.SRC }}
           asset_name: ${{ steps.vars.outputs.SRC }}
           asset_content_type: application/tar+gzip
 
