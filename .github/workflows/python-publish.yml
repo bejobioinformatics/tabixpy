@@ -51,8 +51,8 @@ jobs:
       - name: upload build
         uses: actions/upload-artifact@v2
         with:
-          name: build
-          path: build/
+          name: dist
+          path: dist/
 
   upload:
     needs: build
@@ -64,7 +64,7 @@ jobs:
       - name: Download data
         uses: actions/download-artifact@v2
         with:
-          name: build
+          name: dist
       
       - name: Upload Release Asset - wheel
         id: upload-release-asset-wheel
@@ -102,7 +102,7 @@ jobs:
       - name: Download data
         uses: actions/download-artifact@v2
         with:
-          name: build
+          name: dist
 
       - name: Set up Python
         uses: actions/setup-python@v2
