@@ -1,0 +1,144 @@
+# This workflows will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: Upload Python Package
+
+on:
+#   push:
+#     # Sequence of patterns matched against refs/tags
+#     tags:
+#       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  release:
+    types: [created]
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10  
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Test
+        run: cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: Build Release
+        run: python setup.py sdist bdist_wheel
+      
+      - name: Copy version
+        run: cp VERSION dist/VERSION
+      
+      - name: upload build
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist/
+
+  upload:
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v2
+        
+      - name: Download data
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          
+      - name: Gen Vars
+        id: vars
+        run: |
+          export TAG=$(echo $GITHUB_REF | cut -d / -f 3)
+          export VERSION=$(cat VERSION)
+          echo ::set-output name=TAG::$(echo $TAG)
+          echo ::set-output name=VERSION::$(echo $VERSION)
+          echo ::set-output name=WHEEL::$(echo tabixpy-$VERSION-py3-none-any.whl)
+          echo ::set-output name=SRC::$(echo tabixpy-$VERSION.tar.gz)
+          echo ::set-output name=REPO::$(echo ${GITHUB_REPOSITORY})
+          echo ::set-output name=URL::https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}
+          ls -la
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          hub release edit -a "${{ steps.vars.outputs.WHEEL }}" -a "${{ steps.vars.outputs.SRC }}" -m "" "${{ steps.vars.outputs.TAG }}"
+
+#       - name: Upload Release Asset - wheel
+#         id: upload-release-asset-wheel
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.vars.outputs.URL }}/assets{?name,label}
+#           asset_path: ${{ steps.vars.outputs.WHEEL }}
+#           asset_name: ${{ steps.vars.outputs.WHEEL }}
+#           asset_content_type: application/x-pywheel+zip
+
+#       - name: Upload Release Asset - src
+#         id: upload-release-asset-src
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.vars.outputs.URL }}/assets?name=${{ steps.vars.outputs.SRC }}
+#           asset_path: ${{ steps.vars.outputs.SRC }}
+#           asset_name: ${{ steps.vars.outputs.SRC }}
+#           asset_content_type: application/tar+gzip
+
+  publish:
+    needs: upload
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Download data
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: pip install twine
+      
+      - name: Publish release
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload tabixpy-*

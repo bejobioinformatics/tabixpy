@@ -3,6 +3,10 @@ tabixpy
 
 Tabix parser writtern in Python3.
 
+CI
+--
+![Upload Python Package](https://github.com/bejobioinformatics/tabixpy/workflows/Upload%20Python%20Package/badge.svg)
+
 Install
 -------
 
