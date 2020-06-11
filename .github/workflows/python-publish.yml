@@ -62,7 +62,7 @@ jobs:
         OUTFILE: tabixpy-${{ github.ref }}-py3-none-any.whl
         FILETYPE: application/x-pywheel+zip
       with:
-        upload_url: https://uploads.github.com/repos/${{ GITHUB_REPOSITORY }}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: dist/${{ OUTFILE }}
         asset_name: ${{ OUTFILE }}
         asset_content_type: ${{ FILETYPE }}
@@ -75,7 +75,7 @@ jobs:
         OUTFILE: tabixpy-${{ github.ref }}.tar.gz
         FILETYPE: application/tar+gzip
       with:
-        upload_url: https://uploads.github.com/repos/${{ GITHUB_REPOSITORY }}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: dist/${{ OUTFILE }}
         asset_name: ${{ OUTFILE }}
         asset_content_type: ${{ FILETYPE }}
