@@ -85,6 +85,7 @@ jobs:
           echo ::set-output name=SRC::$(echo tabixpy-$VERSION.tar.gz)
           echo ::set-output name=REPO::$(echo ${GITHUB_REPOSITORY})
           echo ::set-output name=URL::https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${TAG}
+          ls -la
 
       - name: Upload Release Asset - wheel
         id: upload-release-asset-wheel
