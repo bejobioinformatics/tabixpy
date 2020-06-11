@@ -69,6 +69,8 @@ jobs:
     strategy:
       fail-fast: true
     steps:
+      - uses: actions/checkout@v2
+        
       - name: Download data
         uses: actions/download-artifact@v2
         with:
