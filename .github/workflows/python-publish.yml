@@ -10,6 +10,9 @@ on:
 jobs:
   install:
     runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -23,23 +26,32 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
   
   test:
-    runs-on: ubuntu-latest
     needs: install
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
     steps:
     - name: Test
       run: |
         cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
 
   build:
-    runs-on: ubuntu-latest
     needs: test
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
     steps:
     - name: Build Release
       run: python setup.py sdist bdist_wheel
 
   upload:
-    runs-on: ubuntu-latest
     needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
     steps:
     - name: Upload Release Asset - wheel
       id: upload-release-asset-wheel
@@ -68,8 +80,11 @@ jobs:
         asset_content_type: ${{ FILETYPE }}
 
   publish:
-    runs-on: ubuntu-latest
     needs: upload
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      fail-fast: true
     steps:
     - name: Publish release
       env:
