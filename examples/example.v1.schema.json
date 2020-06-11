@@ -1,0 +1,627 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "example.v1.json",
+    "type": "object",
+    "title": "JSON Tabix",
+    "description": "JSON encoded Tabix File",
+    "default": {},
+    "examples": [
+        {
+            "__format_name__": "TBJ",
+            "__format_ver__": "1",
+            "n_ref": 1,
+            "format": 2,
+            "col_seq": 1,
+            "col_beg": 2,
+            "col_end": 0,
+            "meta": "#",
+            "skip": 0,
+            "l_nm": 11,
+            "names": [
+                "SL2.50ch00"
+            ],
+            "refs": [
+                {
+                    "ref_n": 0,
+                    "ref_name": "SL2.50ch00",
+                    "n_bin": 86,
+                    "bins": [
+                        {
+                            "bin_n": 0,
+                            "bin": 4681,
+                            "n_chunk": 1,
+                            "chunks": [
+                                {
+                                    "chunk_n": 0,
+                                    "cnk_beg": 29542,
+                                    "cnk_end": 8160890030
+                                }
+                            ]
+                        },
+                        {
+                            "bin_n": 85,
+                            "bin": 4766,
+                            "n_chunk": 1,
+                            "chunks": [
+                                {
+                                    "chunk_n": 0,
+                                    "cnk_beg": 460168303127,
+                                    "cnk_end": 461352730624
+                                }
+                            ]
+                        }
+                    ],
+                    "n_intv": 86,
+                    "intvs": [
+                        {
+                            "intv_n": 0,
+                            "ioff": 29542
+                        },
+                        {
+                            "intv_n": 85,
+                            "ioff": 460168303127
+                        }
+                    ]
+                }
+            ],
+            "n_no_coor": null
+        }
+    ],
+    "required": [
+        "__format_name__",
+        "__format_ver__",
+        "n_ref",
+        "format",
+        "col_seq",
+        "col_beg",
+        "col_end",
+        "meta",
+        "skip",
+        "l_nm",
+        "names",
+        "refs",
+        "n_no_coor"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "__format_name__": {
+            "$id": "#/properties/__format_name__",
+            "type": "string",
+            "title": "The __format_name__ schema",
+            "description": "File format name.",
+            "default": "",
+            "examples": [
+                "TBJ"
+            ]
+        },
+        "__format_ver__": {
+            "$id": "#/properties/__format_ver__",
+            "type": "string",
+            "title": "The __format_ver__ schema",
+            "description": "File format version.",
+            "default": "",
+            "examples": [
+                "1.0"
+            ]
+        },
+        "n_ref": {
+            "$id": "#/properties/n_ref",
+            "type": "integer",
+            "title": "The n_ref schema",
+            "description": "# sequences.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "format": {
+            "$id": "#/properties/format",
+            "type": "integer",
+            "title": "The format schema",
+            "description": "Format (0: generic; 1: SAM; 2: VCF).",
+            "default": 0,
+            "examples": [
+                2
+            ]
+        },
+        "col_seq": {
+            "$id": "#/properties/col_seq",
+            "type": "integer",
+            "title": "The col_seq schema",
+            "description": "Column for the sequence name.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "col_beg": {
+            "$id": "#/properties/col_beg",
+            "type": "integer",
+            "title": "The col_beg schema",
+            "description": "Column for the start of a region.",
+            "default": 0,
+            "examples": [
+                2
+            ]
+        },
+        "col_end": {
+            "$id": "#/properties/col_end",
+            "type": "integer",
+            "title": "The col_end schema",
+            "description": "Column for the end of a region.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "meta": {
+            "$id": "#/properties/meta",
+            "type": "string",
+            "title": "The meta schema",
+            "description": "Leading character for comment lines.",
+            "default": "",
+            "examples": [
+                "#"
+            ]
+        },
+        "skip": {
+            "$id": "#/properties/skip",
+            "type": "integer",
+            "title": "The skip schema",
+            "description": "# lines to skip at the beginning.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "l_nm": {
+            "$id": "#/properties/l_nm",
+            "type": "integer",
+            "title": "The l_nm schema",
+            "description": "Length of concatenated sequence names.",
+            "default": 0,
+            "examples": [
+                11
+            ]
+        },
+        "names": {
+            "$id": "#/properties/names",
+            "type": "array",
+            "title": "The names schema",
+            "description": "Sequence names.",
+            "default": [],
+            "examples": [
+                [
+                    "SL2.50ch00"
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/names/items/anyOf/0",
+                        "type": "string",
+                        "title": "The first anyOf schema",
+                        "description": "Sequence name.",
+                        "default": "",
+                        "examples": [
+                            "SL2.50ch00"
+                        ]
+                    }
+                ],
+                "$id": "#/properties/names/items"
+            }
+        },
+        "refs": {
+            "$id": "#/properties/refs",
+            "type": "array",
+            "title": "The refs schema",
+            "description": "List of indices (n=n_ref).",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "ref_n": 0,
+                        "ref_name": "SL2.50ch00",
+                        "n_bin": 86,
+                        "bins": [
+                            {
+                                "bin_n": 0,
+                                "bin": 4681,
+                                "n_chunk": 1,
+                                "chunks": [
+                                    {
+                                        "chunk_n": 0,
+                                        "cnk_beg": 29542,
+                                        "cnk_end": 8160890030
+                                    }
+                                ]
+                            },
+                            {
+                                "bin_n": 85,
+                                "bin": 4766,
+                                "n_chunk": 1,
+                                "chunks": [
+                                    {
+                                        "chunk_n": 0,
+                                        "cnk_beg": 460168303127,
+                                        "cnk_end": 461352730624
+                                    }
+                                ]
+                            }
+                        ],
+                        "n_intv": 86,
+                        "intvs": [
+                            {
+                                "intv_n": 0,
+                                "ioff": 29542
+                            },
+                            {
+                                "intv_n": 85,
+                                "ioff": 460168303127
+                            }
+                        ]
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/refs/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "Reference data.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "ref_n": 0,
+                                "ref_name": "SL2.50ch00",
+                                "n_bin": 86,
+                                "bins": [
+                                    {
+                                        "bin_n": 0,
+                                        "bin": 4681,
+                                        "n_chunk": 1,
+                                        "chunks": [
+                                            {
+                                                "chunk_n": 0,
+                                                "cnk_beg": 29542,
+                                                "cnk_end": 8160890030
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "bin_n": 85,
+                                        "bin": 4766,
+                                        "n_chunk": 1,
+                                        "chunks": [
+                                            {
+                                                "chunk_n": 0,
+                                                "cnk_beg": 460168303127,
+                                                "cnk_end": 461352730624
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "n_intv": 86,
+                                "intvs": [
+                                    {
+                                        "intv_n": 0,
+                                        "ioff": 29542
+                                    },
+                                    {
+                                        "intv_n": 85,
+                                        "ioff": 460168303127
+                                    }
+                                ]
+                            }
+                        ],
+                        "required": [
+                            "ref_n",
+                            "ref_name",
+                            "n_bin",
+                            "bins",
+                            "n_intv",
+                            "intvs"
+                        ],
+                        "additionalProperties": true,
+                        "properties": {
+                            "ref_n": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/ref_n",
+                                "type": "integer",
+                                "title": "The ref_n schema",
+                                "description": "Sequence position.",
+                                "default": 0,
+                                "examples": [
+                                    0
+                                ]
+                            },
+                            "ref_name": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/ref_name",
+                                "type": "string",
+                                "title": "The ref_name schema",
+                                "description": "Sequence name.",
+                                "default": "",
+                                "examples": [
+                                    "SL2.50ch00"
+                                ]
+                            },
+                            "n_bin": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/n_bin",
+                                "type": "integer",
+                                "title": "The n_bin schema",
+                                "description": "# distinct bins (for the binning index).",
+                                "default": 0,
+                                "examples": [
+                                    86
+                                ]
+                            },
+                            "bins": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/bins",
+                                "type": "array",
+                                "title": "The bins schema",
+                                "description": "List of distinct bins (n=n_bin).",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "bin_n": 0,
+                                            "bin": 4681,
+                                            "n_chunk": 1,
+                                            "chunks": [
+                                                {
+                                                    "chunk_n": 0,
+                                                    "cnk_beg": 29542,
+                                                    "cnk_end": 8160890030
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "bin_n": 85,
+                                            "bin": 4766,
+                                            "n_chunk": 1,
+                                            "chunks": [
+                                                {
+                                                    "chunk_n": 0,
+                                                    "cnk_beg": 460168303127,
+                                                    "cnk_end": 461352730624
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "Distinct Bin data.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "bin_n": 0,
+                                                    "bin": 4681,
+                                                    "n_chunk": 1,
+                                                    "chunks": [
+                                                        {
+                                                            "chunk_n": 0,
+                                                            "cnk_beg": 29542,
+                                                            "cnk_end": 8160890030
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "required": [
+                                                "bin_n",
+                                                "bin",
+                                                "n_chunk",
+                                                "chunks"
+                                            ],
+                                            "additionalProperties": true,
+                                            "properties": {
+                                                "bin_n": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/bin_n",
+                                                    "type": "integer",
+                                                    "title": "The bin_n schema",
+                                                    "description": "Bin position.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "bin": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/bin",
+                                                    "type": "integer",
+                                                    "title": "The bin schema",
+                                                    "description": "Distinct bin number.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        4681
+                                                    ]
+                                                },
+                                                "n_chunk": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/n_chunk",
+                                                    "type": "integer",
+                                                    "title": "The n_chunk schema",
+                                                    "description": "# chunks.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        1
+                                                    ]
+                                                },
+                                                "chunks": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks",
+                                                    "type": "array",
+                                                    "title": "The chunks schema",
+                                                    "description": "List of chunks (n=n_chunk).",
+                                                    "default": [],
+                                                    "examples": [
+                                                        [
+                                                            {
+                                                                "chunk_n": 0,
+                                                                "cnk_beg": 29542,
+                                                                "cnk_end": 8160890030
+                                                            }
+                                                        ]
+                                                    ],
+                                                    "additionalItems": true,
+                                                    "items": {
+                                                        "anyOf": [
+                                                            {
+                                                                "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/items/anyOf/0",
+                                                                "type": "object",
+                                                                "title": "The first anyOf schema",
+                                                                "description": "Chunks data.",
+                                                                "default": {},
+                                                                "examples": [
+                                                                    {
+                                                                        "chunk_n": 0,
+                                                                        "cnk_beg": 29542,
+                                                                        "cnk_end": 8160890030
+                                                                    }
+                                                                ],
+                                                                "required": [
+                                                                    "chunk_n",
+                                                                    "cnk_beg",
+                                                                    "cnk_end"
+                                                                ],
+                                                                "additionalProperties": true,
+                                                                "properties": {
+                                                                    "chunk_n": {
+                                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/items/anyOf/0/properties/chunk_n",
+                                                                        "type": "integer",
+                                                                        "title": "The chunk_n schema",
+                                                                        "description": "Chunk position.",
+                                                                        "default": 0,
+                                                                        "examples": [
+                                                                            0
+                                                                        ]
+                                                                    },
+                                                                    "cnk_beg": {
+                                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/items/anyOf/0/properties/cnk_beg",
+                                                                        "type": "integer",
+                                                                        "title": "The cnk_beg schema",
+                                                                        "description": "Virtual file offset of the start of the chunk.",
+                                                                        "default": 0,
+                                                                        "examples": [
+                                                                            29542
+                                                                        ]
+                                                                    },
+                                                                    "cnk_end": {
+                                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/items/anyOf/0/properties/cnk_end",
+                                                                        "type": "integer",
+                                                                        "title": "The cnk_end schema",
+                                                                        "description": "Virtual file offset of the end of the chunk.",
+                                                                        "default": 0,
+                                                                        "examples": [
+                                                                            8160890030
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            }
+                                                        ],
+                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/items"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items"
+                                }
+                            },
+                            "n_intv": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/n_intv",
+                                "type": "integer",
+                                "title": "The n_intv schema",
+                                "description": "# 16kb intervals (for the linear index).",
+                                "default": 0,
+                                "examples": [
+                                    86
+                                ]
+                            },
+                            "intvs": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/intvs",
+                                "type": "array",
+                                "title": "The intvs schema",
+                                "description": "List of distinct intervals (n=n_intv).",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "intv_n": 0,
+                                            "ioff": 29542
+                                        },
+                                        {
+                                            "intv_n": 85,
+                                            "ioff": 460168303127
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "Distinct interval data.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "intv_n": 0,
+                                                    "ioff": 29542
+                                                }
+                                            ],
+                                            "required": [
+                                                "intv_n",
+                                                "ioff"
+                                            ],
+                                            "additionalProperties": true,
+                                            "properties": {
+                                                "intv_n": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0/properties/intv_n",
+                                                    "type": "integer",
+                                                    "title": "The intv_n schema",
+                                                    "description": "Distinct interval position.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "ioff": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0/properties/ioff",
+                                                    "type": "integer",
+                                                    "title": "The ioff schema",
+                                                    "description": "File offset of the first record in the interval.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        29542
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "$id": "#/properties/refs/items"
+            }
+        },
+        "n_no_coor": {
+            "$id": "#/properties/n_no_coor",
+            "type": "integer",
+            "title": "The n_no_coor schema",
+            "description": "# unmapped reads without coordinates set.",
+            "default": null,
+            "examples": [
+                null
+            ]
+        }
+    }
+}

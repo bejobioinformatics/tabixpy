@@ -1,0 +1,38 @@
+__format_name__: TBY
+__format_ver__: '1'
+col_beg: 2
+col_end: 0
+col_seq: 1
+format: 2
+l_nm: 11
+meta: '#'
+n_no_coor: null
+n_ref: 1
+names:
+- SL2.50ch00
+refs:
+- bins:
+  - bin: 4681
+    bin_n: 0
+    chunks:
+    - chunk_n: 0
+      cnk_beg: 29542
+      cnk_end: 8160890030
+    n_chunk: 1
+  - bin: 4766
+    bin_n: 85
+    chunks:
+    - chunk_n: 0
+      cnk_beg: 460168303127
+      cnk_end: 461352730624
+    n_chunk: 1
+  intvs:
+  - intv_n: 0
+    ioff: 29542
+  - intv_n: 85
+    ioff: 460168303127
+  n_bin: 86
+  n_intv: 86
+  ref_n: 0
+  ref_name: SL2.50ch00
+skip: 0

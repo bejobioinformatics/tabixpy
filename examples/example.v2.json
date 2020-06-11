@@ -1,0 +1,49 @@
+{
+    "__format_name__": "TBJ",
+    "__format_ver__": 2,
+    "n_ref": 1,
+    "format": 2,
+    "col_seq": 1,
+    "col_beg": 2,
+    "col_end": 0,
+    "meta": "#",
+    "skip": 0,
+    "l_nm": 11,
+    "names": [
+        "SL2.50ch00"
+    ],
+    "refs": [{
+        "ref_n": 0,
+        "ref_name": "SL2.50ch00",
+        "n_bin": 86,
+        "bins": [{
+                "bin_n": 0,
+                "bin": 4681,
+                "n_chunk": 1,
+                "chunks": [
+                    [
+                        29542,
+                        8160890030
+                    ]
+                ]
+            },
+            {
+                "bin_n": 85,
+                "bin": 4766,
+                "n_chunk": 1,
+                "chunks": [
+                    [
+                        460168303127,
+                        461352730624
+                    ]
+                ]
+            }
+        ],
+        "n_intv": 86,
+        "intvs": [
+            29542,
+            460168303127
+        ]
+    }],
+    "n_no_coor": null
+}
