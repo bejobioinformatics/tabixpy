@@ -1,11 +1,15 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "rt") as fh:
     long_description = fh.read()
+
+with open("VERSION", "rt") as fh:
+    version = fh.read()
+
 
 setuptools.setup(
     name="tabixpy", # Replace with your own username
-    version="1",
+    version=version,
     author="Saulo Aflitos",
     author_email="saulobejo@users.noreply.github.com",
     description="Tabix reader written 100% in Python",
