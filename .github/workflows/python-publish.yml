@@ -27,6 +27,7 @@ jobs:
   
   test:
     needs: install
+#     if: needs.install.result == "success"
     runs-on: ubuntu-latest
     continue-on-error: false
     strategy:
