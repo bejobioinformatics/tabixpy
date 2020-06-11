@@ -8,10 +8,8 @@ on:
     types: [created]
 
 jobs:
-  deploy:
-
+  install:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -23,13 +21,58 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+  
+  test:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
     - name: Test
       run: |
         cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
-    - name: Build and publish
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - name: Build Release
+      run: python setup.py sdist bdist_wheel
+
+  upload:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Upload Release Asset - wheel
+      id: upload-release-asset-wheel
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OUTFILE: tabixpy-${{ github.ref }}-py3-none-any.whl
+        FILETYPE: application/x-pywheel+zip
+      with:
+        upload_url: https://uploads.github.com/repos/${{ GITHUB_REPOSITORY }}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: dist/${{ OUTFILE }}
+        asset_name: ${{ OUTFILE }}
+        asset_content_type: ${{ FILETYPE }}
+
+    - name: Upload Release Asset - src
+      id: upload-release-asset-src
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OUTFILE: tabixpy-${{ github.ref }}.tar.gz
+        FILETYPE: application/tar+gzip
+      with:
+        upload_url: https://uploads.github.com/repos/${{ GITHUB_REPOSITORY }}/releases/${{ github.ref }}/assets?name=${{ OUTFILE }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: dist/${{ OUTFILE }}
+        asset_name: ${{ OUTFILE }}
+        asset_content_type: ${{ FILETYPE }}
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: upload
+    steps:
+    - name: Publish release
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+      run: twine upload dist/*
