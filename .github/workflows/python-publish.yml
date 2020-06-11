@@ -93,7 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          hub release edit -a "${{ steps.vars.outputs.WHEEL }}" -a "${{ steps.vars.outputs.SRC }}" "${{ steps.vars.outputs.TAG }}"
+          hub release edit -a "${{ steps.vars.outputs.WHEEL }}" -a "${{ steps.vars.outputs.SRC }}" -m "" "${{ steps.vars.outputs.TAG }}"
 
 #       - name: Upload Release Asset - wheel
 #         id: upload-release-asset-wheel
