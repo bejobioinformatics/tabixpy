@@ -5,7 +5,7 @@ import struct
 import json
 import logging
 
-__format_ver__    = 2
+__format_ver__    = 3
 __format_name__   = "TBJ"
 
 COMPRESS          = True
@@ -174,17 +174,74 @@ def read_tabix(infile):
             assert all([i >     0 for i in chunks])
             assert all([i < 2**63 for i in chunks])
 
-            chunks = [(b,e) for b,e in zip(chunks[0::2], chunks[1::2])]
+            # In the compressed file, each uncompressed byte in the text data file is
+            # assigned a unique 64-bit virtual file offset where the higher 48 bits keep the
+            # real file offset of the start of the gzip block the byte falls in, and the
+            # lower 16 bits store the offset of the byte inside the gzip block. Given a
+            # virtual file offset, one can directly seek to the start of the gzip block using
+            # the higher 48 bits, decompress the block and retrieve the byte pointed by the
+            # lower 16 bits of the virtual offset.
 
-            ref["bins"][bin_n]["chunks"] = chunks
-            
+            block_bytes_mask    = 0x0000000000000FFFF
+            real_file_offsets   = [c >> 16              for c in chunks]
+            block_bytes_offsets = [c & block_bytes_mask for c in chunks]
+
+            assert all([i >=     0 for i in real_file_offsets])
+            assert all([i <  2**48 for i in real_file_offsets])
+
+            assert all([i >=     0 for i in block_bytes_offsets])
+            assert all([i <  2**16 for i in block_bytes_offsets])
+
+            chunks_data = [None] * n_chunk
+
+            for p, c in enumerate(range(0,len(chunks),2)):
+                chk_beg       = chunks[c+0]
+                chk_end       = chunks[c+1]
+
+                chk_beg_real  = real_file_offsets[c+0]
+                chk_end_real  = real_file_offsets[c+1]
+
+                chk_beg_bytes = block_bytes_offsets[c+0]
+                chk_end_bytes = block_bytes_offsets[c+1]
+
+                # logger.debug(f"begin")
+                # logger.debug(f"  block             {chk_beg:064b} {chk_beg:15,d}")
+                # logger.debug(f"  mask              {block_bytes_mask:064b}")
+                # logger.debug(f"  real offset       {chk_beg_real:064b} {chk_beg_real:15,d}")
+                # logger.debug(f"  block byte offset {chk_beg_bytes:064b} {chk_beg_bytes:15,d}")
+                # logger.debug(f"end")
+                # logger.debug(f"  block             {chk_end:064b} {chk_end:15,d}")
+                # logger.debug(f"  mask              {block_bytes_mask:064b}")
+                # logger.debug(f"  real offset       {chk_end_real:064b} {chk_end_real:15,d}")
+                # logger.debug(f"  block byte offset {chk_end_bytes:064b} {chk_end_bytes:15,d}")
+                # logger.debug("")
+
+                chunks_data[p] = [
+                    [chk_beg_real, chk_beg_bytes],
+                    [chk_end_real, chk_end_bytes]
+                ]
+
             if getLogLevel() == "DEBUG":
                 logger.debug(f"======================== List of chunks (n=n_chunk[{n_chunk:15,d}]) ============================")
                 for chunk_n in range(n_chunk):
-                    cnk_beg, cnk_end = chunks[chunk_n]
+                    [
+                        [chk_beg_real, chk_beg_bytes],
+                        [chk_end_real, chk_end_bytes]
+                    ] = chunks_data[chunk_n]
                     logger.debug(f"             chunk_n {chunk_n+1:15,d}/{n_chunk:15,d}")
-                    logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {cnk_beg:15,d}")
-                    logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {cnk_end:15,d}")
+                    logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {chk_beg_real:15,d} {chk_beg_bytes:15,d}")
+                    logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {chk_end_real:15,d} {chk_end_bytes:15,d}")
+            ref["bins"][bin_n]["chunks"] = chunks_data
+
+            # chunks = [(b,e) for b,e in zip(chunks[0::2], chunks[1::2])]
+            # ref["bins"][bin_n]["chunks"] = chunks
+            # if getLogLevel() == "DEBUG":
+            #     logger.debug(f"======================== List of chunks (n=n_chunk[{n_chunk:15,d}]) ============================")
+            #     for chunk_n in range(n_chunk):
+            #         cnk_beg, cnk_end = chunks[chunk_n]
+            #         logger.debug(f"             chunk_n {chunk_n+1:15,d}/{n_chunk:15,d}")
+            #         logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {cnk_beg:15,d}")
+            #         logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {cnk_end:15,d}")
 
         (n_intv,)  = get_values('<i')
         logger.debug(f"     n_intv              # 16kb intervals (for the linear index)         int32_t  {n_intv:15,d}")
@@ -236,76 +293,3 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
 
     save(data, ingz)
-
-
-"""
-https://samtools.github.io/hts-specs/tabix.pdf
-
-Field                   Description                                     Type     Value
----------------------------------------------------------------------------------------
-magic                   Magic string                                    char[4]  TBI\1
-n_ref                   # sequences                                     int32_t
-format                  Format (0: generic; 1: SAM; 2: VCF)             int32_t
-col_seq                 Column for the sequence name                    int32_t
-col_beg                 Column for the start of a region                int32_t
-col_end                 Column for the end of a region                  int32_t
-meta                    Leading character for comment lines             int32_t
-skip                    # lines to skip at the beginning                int32_t
-l_nm                    Length of concatenated sequence names           int32_t
-names                   Concatenated names, each zero terminated        char[l_nm]
-======================= List of indices (n=n_ref)             =======================
-    n_bin               # distinct bins (for the binning index)         int32_t
-======================= List of distinct bins (n=n_bin)       =======================
-        bin             Distinct bin number                             uint32_t
-        n_chunk         # chunks                                        int32_t
-======================= List of chunks (n=n_chunk)            =======================
-            cnk_beg     Virtual file offset of the start of the chunk   uint64_t
-            cnk_end     Virtual file offset of the end of the chunk     uint64_t
-    n_intv              # 16kb intervals (for the linear index)         int32_t
-======================= List of distinct intervals (n=n_intv) =======================
-        ioff            File offset of the first record in the interval uint64_t
-n_no_coor (optional)    # unmapped reads without coordinates set        uint64_t
-
-Notes:
-- The index file is BGZF compressed.
-
-- All integers are little-endian.
-
-- When (format&0x10000) is true, the coordinate follows the BED rule (i.e. half-closed-half-open and
-zero based); otherwise, the coordinate follows the GFF rule (closed and one based).
-
-- For the SAM format, the end of a region equals POS plus the reference length in the alignment, inferred
-from CIGAR. For the VCF format, the end of a region equals POS plus the size of the deletion.
-
-- Field col beg may equal col end, and in this case, the end of a region is end=beg+1.
-
-- Example:
-  For GFF, format=0      , col seq=1, col beg=4, col end=5, meta=‘#’ and skip=0.
-  For BED, format=0x10000, col seq=1, col beg=2, col end=3, meta=‘#’ and skip=0.
-
-- Given a zero-based, half-closed and half-open region [beg, end), the bin number is calculated with
-the following C function:
-    int reg2bin(int beg, int end) {
-        --end;
-        if (beg>>14 == end>>14) return ((1<<15)-1)/7 + (beg>>14);
-        if (beg>>17 == end>>17) return ((1<<12)-1)/7 + (beg>>17);
-        if (beg>>20 == end>>20) return ((1<< 9)-1)/7 + (beg>>20);
-        if (beg>>23 == end>>23) return ((1<< 6)-1)/7 + (beg>>23);
-        if (beg>>26 == end>>26) return ((1<< 3)-1)/7 + (beg>>26);
-        return 0;
-    }
-
-- The list of bins that may overlap a region [beg, end) can be obtained with the following C function:
-    #define MAX_BIN (((1<<18)-1)/7)
-    int reg2bins(int rbeg, int rend, uint16_t list[MAX_BIN]) {
-        int i = 0, k;
-        --rend;
-        list[i++] = 0;
-        for (k =    1 + (rbeg>>26); k <=    1 + (rend>>26); ++k) list[i++] = k;
-        for (k =    9 + (rbeg>>23); k <=    9 + (rend>>23); ++k) list[i++] = k;
-        for (k =   73 + (rbeg>>20); k <=   73 + (rend>>20); ++k) list[i++] = k;
-        for (k =  585 + (rbeg>>17); k <=  585 + (rend>>17); ++k) list[i++] = k;
-        for (k = 4681 + (rbeg>>14); k <= 4681 + (rend>>14); ++k) list[i++] = k;
-        return i; // #elements in list[]
-    }
-"""
