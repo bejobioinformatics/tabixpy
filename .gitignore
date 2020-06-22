@@ -1,4 +1,7 @@
 dist/
 build/
 tabixpy.*/
+*.log
+*.tbj
+*.tby
 __pycache__
