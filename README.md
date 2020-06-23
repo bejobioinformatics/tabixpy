@@ -112,7 +112,29 @@ end
 BGZIP
 -----
 
+http://samtools.github.io/hts-specs/SAMv1.pdf
+
+
+```
+The random access method to be described next limits the uncompressed contents of each BGZF block
+to a maximum of 216 bytes of data. Thus while ISIZE is stored as a uint32 t as per the gzip format, in
+BGZF it is limited to the range [0, 65536]. BSIZE can represent BGZF block sizes in the range [1, 65536],
+though typically BSIZE will be rather less than ISIZE due to compression.
+
+4.1.1 Random access
+BGZF files support random access through the BAM file index. To achieve this, the BAM file index uses
+virtual file offsets into the BGZF file. Each virtual file offset is an unsigned 64-bit integer, defined as:
+coffset<<16|uoffset, where coffset is an unsigned byte offset into the BGZF file to the beginning of a
+BGZF block, and uoffset is an unsigned byte offset into the uncompressed data stream represented by that
+BGZF block. Virtual file offsets can be compared, but subtraction between virtual file offsets and addition
+between a virtual offset and an integer are both disallowed.
+```
+
+TABIX
+-----
+
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3042176/
+https://samtools.github.io/hts-specs/tabix.pdf
 
 ```
 2.1 Sorting and BGZF compression
@@ -149,9 +171,9 @@ and then test each record in the collected bins for overlaps.
 In principle, bins can be selected freely as long as each record can be
 assigned to a bin. In the Tabix binning index, we adopt a multilevel binning
 scheme where bins at same level are non-overlapping and of the same size. In
-Tabix, each bin k, 0<=k<=37 449, represents a half-close-half-open interval
+Tabix, each bin k, 0<=k<=37,449, represents a half-close-half-open interval
 [(k-ol)sl, (k-ol+1)sl), where l = [log2(7k+1)/3] is the level of the bin,
-sl = 229-3l is the size of the bin at level l and ol = (23l - 1)/7 is the
+sl = 2^(29-3l) is the size of the bin at level l and ol = (2^3l - 1)/7 is the
 offset at l. In this scheme, bin 0 spans 512 Mb, 1-8 span 64 Mb, 9-72 8 Mb,
 73-584 1 Mb, 585-4680 128 kb and 4681-37449 span 16 kb intervals. The scheme is
 very similar to the UCSC binning (Kent et al., 2002) except that in UCSC,

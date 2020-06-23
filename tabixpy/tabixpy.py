@@ -5,14 +5,22 @@ import struct
 import json
 import logging
 
-__format_ver__    = 3
+__format_ver__    = 4
 __format_name__   = "TBJ"
 
 COMPRESS          = True
+BRICK_SIZE        = 216
+BLOCK_SIZE        = 2**16
+FILE_BYTES_MASK   = 0xFFFFFFFFFFFFF0000
+BLOCK_BYTES_MASK  = 0x0000000000000FFFF
+
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)23s - %(name)s - %(levelname)6s - %(message)s"
+    level   = logging.DEBUG,
+    format  = "%(asctime)8s - %(name)s - %(levelname)-6s - %(message)s",
+    datefmt = "%H:%M:%S",
+    # format="%(asctime)23s - %(name)s - %(levelname)6s - %(message)s",
+    # datefmt='%Y-%m-%d %H:%M:%S',
 )
 
 logger        = logging.getLogger('tabixpy')
@@ -54,6 +62,89 @@ def save(data, ingz, compress=COMPRESS):
     with opener(outfileJ, "wt") as fhd:
         json.dump(data, fhd, indent=1)
 
+def reg2bin(begPos, endPos):
+    #- Given a zero-based, half-closed and half-open region [beg, end), 
+    # the bin number is calculated with the following C function:
+
+    endPos -= 1
+    if (begPos>>14 == endPos>>14): return ((1<<15)-1)//7 + (begPos>>14)
+    if (begPos>>17 == endPos>>17): return ((1<<12)-1)//7 + (begPos>>17)
+    if (begPos>>20 == endPos>>20): return ((1<< 9)-1)//7 + (begPos>>20)
+    if (begPos>>23 == endPos>>23): return ((1<< 6)-1)//7 + (begPos>>23)
+    if (begPos>>26 == endPos>>26): return ((1<< 3)-1)//7 + (begPos>>26)
+    return 0
+
+MAX_BIN = (((1<<18)-1)//7)
+def reg2bins(rbeg, rend):
+    # The list of bins that may overlap a region [beg, end) can be obtained 
+    # with the following C function:
+    #define MAX_BIN (((1<<18)-1)/7)
+    
+    res = [None] * MAX_BIN
+    
+    i       = 0
+    k       = 0
+    rend   -= 1
+    res[i]  = 0
+    i      += 1
+
+    ranges = [
+        [    1 + (rbeg>>26),      1 + (rend>>26)],
+        [    9 + (rbeg>>23),      9 + (rend>>23)],
+        [   73 + (rbeg>>20),     73 + (rend>>20)],
+        [  585 + (rbeg>>17),    585 + (rend>>17)],
+        [ 4681 + (rbeg>>14),   4681 + (rend>>14)]
+    ]
+
+    for b,e in ranges:
+        for k in range(b ,e+1):
+            res[i] = k
+            i+=1
+
+    return i; # #elements in list[]
+
+def getPos(filehandle, real_pos, bytes_pos):
+    # print(f"seek {real_pos} {bytes_pos}")
+    filehandle.seek(real_pos, 0)
+
+    bin_pos   = -1
+    first_pos = -1
+    last_pos  = -1
+    with gzip.open(filehandle, 'rb') as g:
+        block     = g.read(BLOCK_SIZE).decode()
+        if len(block) > 0 and block[0] != "#":
+            rows      = block.split("\n")
+            first_row = None
+            last_row  = None
+            if len(rows) > 1:
+                if len(rows[0]) == len(rows[1]):
+                    first_row = rows[0]
+                else:
+                    first_row = rows[1]
+                
+                if len(rows[-2]) == len(rows[-1]):
+                    last_row = rows[-1]
+                else:
+                    last_row = rows[-2]
+            else:
+                first_row = rows[0]
+                last_row  = rows[-1]
+            
+            first_cols = first_row.split("\t")
+            first_pos  = first_cols[1]
+            first_pos  = int(first_pos)
+
+            last_cols  = last_row.split("\t")
+            last_pos   = last_cols[1]
+            last_pos   = int(last_pos)
+
+            bin_reg    = block[bytes_pos:bytes_pos+1024]
+            bin_cols   = bin_reg.split("\t")
+            bin_pos    = bin_cols[1]
+            bin_pos    = int(bin_pos)
+    return bin_pos, first_pos, last_pos
+
+
 def read_tabix(infile):
     logger.info(f"reading {infile}")
 
@@ -62,6 +153,7 @@ def read_tabix(infile):
     assert os.path.exists(inid), inid
 
     fhd        = gzip.open(inid, "rb")
+    inf        = open(ingz, "rb")
     get_values = gen_value_getter(fhd)
     data       = {}
 
@@ -137,7 +229,7 @@ def read_tabix(infile):
         ref["ref_name"]     = names[ref_n]
         data["refs"][ref_n] = ref
 
-        (n_bin,)   = get_values('<i')
+        (n_bin,)            = get_values('<i')
         
         logger.debug(f"     ref_n {ref_n+1:15,d}/{n_ref:15,d} ({names[ref_n]})")
         logger.debug(f"       n_bin             # distinct bins (for the binning index)         int32_t  {n_bin:15,d}")
@@ -149,6 +241,11 @@ def read_tabix(infile):
         ref["bins" ] = [None] * n_bin
 
         logger.debug(f"======================== List of distinct bins (n=n_bin [{n_bin:15,d}]) ======================")
+        last_chk_real_beg = None
+        last_chk_real_end = None
+        
+        position_memoize = {}
+
         for bin_n in range(n_bin):
             (bin_v,n_chunk) = get_values('<Ii')
 
@@ -182,66 +279,102 @@ def read_tabix(infile):
             # the higher 48 bits, decompress the block and retrieve the byte pointed by the
             # lower 16 bits of the virtual offset.
 
-            block_bytes_mask    = 0x0000000000000FFFF
+            # real_file_offsets   = [c & FILE_BYTES_MASK   for c in chunks]
             real_file_offsets   = [c >> 16              for c in chunks]
-            block_bytes_offsets = [c & block_bytes_mask for c in chunks]
+            block_bytes_offsets = [c & BLOCK_BYTES_MASK for c in chunks]
 
-            assert all([i >=     0 for i in real_file_offsets])
-            assert all([i <  2**48 for i in real_file_offsets])
+            assert all([i >=     0     for i in real_file_offsets])
+            assert all([i <  2**48     for i in real_file_offsets])
 
-            assert all([i >=     0 for i in block_bytes_offsets])
-            assert all([i <  2**16 for i in block_bytes_offsets])
+            assert all([i >=          0 for i in block_bytes_offsets])
+            assert all([i <  BLOCK_SIZE for i in block_bytes_offsets])
 
-            chunks_data = [None] * n_chunk
+            chunks_data = {
+                "chunk_begin" : [None] * n_chunk,
+                "chunk_end"   : [None] * n_chunk,
+            }
 
-            for p, c in enumerate(range(0,len(chunks),2)):
-                chk_beg       = chunks[c+0]
-                chk_end       = chunks[c+1]
+            for chunk_n, chunk_i in enumerate(range(0,len(chunks),2)):
+                chk_beg       = chunks[chunk_i+0]
+                chk_end       = chunks[chunk_i+1]
 
-                chk_beg_real  = real_file_offsets[c+0]
-                chk_end_real  = real_file_offsets[c+1]
+                chk_real_beg  = real_file_offsets[chunk_i+0]
+                chk_real_end  = real_file_offsets[chunk_i+1]
 
-                chk_beg_bytes = block_bytes_offsets[c+0]
-                chk_end_bytes = block_bytes_offsets[c+1]
+                chk_bytes_beg = block_bytes_offsets[chunk_i+0]
+                chk_bytes_end = block_bytes_offsets[chunk_i+1]
 
                 # logger.debug(f"begin")
                 # logger.debug(f"  block             {chk_beg:064b} {chk_beg:15,d}")
-                # logger.debug(f"  mask              {block_bytes_mask:064b}")
-                # logger.debug(f"  real offset       {chk_beg_real:064b} {chk_beg_real:15,d}")
-                # logger.debug(f"  block byte offset {chk_beg_bytes:064b} {chk_beg_bytes:15,d}")
+                # logger.debug(f"  mask              {BLOCK_BYTES_MASK:064b}")
+                # logger.debug(f"  real offset       {chk_real_beg:064b} {chk_real_beg:15,d}")
+                # logger.debug(f"  block byte offset {chk_bytes_beg:064b} {chk_bytes_beg:15,d}")
                 # logger.debug(f"end")
                 # logger.debug(f"  block             {chk_end:064b} {chk_end:15,d}")
-                # logger.debug(f"  mask              {block_bytes_mask:064b}")
-                # logger.debug(f"  real offset       {chk_end_real:064b} {chk_end_real:15,d}")
-                # logger.debug(f"  block byte offset {chk_end_bytes:064b} {chk_end_bytes:15,d}")
+                # logger.debug(f"  mask              {BLOCK_BYTES_MASK:064b}")
+                # logger.debug(f"  real offset       {chk_real_end:064b} {chk_real_end:15,d}")
+                # logger.debug(f"  block byte offset {chk_bytes_end:064b} {chk_bytes_end:15,d}")
                 # logger.debug("")
 
-                chunks_data[p] = [
-                    [chk_beg_real, chk_beg_bytes],
-                    [chk_end_real, chk_end_bytes]
-                ]
+                assert chk_beg       < chk_end
+                assert chk_real_beg  < chk_real_end
+                # assert chk_bytes_beg < chk_bytes_end
 
-            if getLogLevel() == "DEBUG":
-                logger.debug(f"======================== List of chunks (n=n_chunk[{n_chunk:15,d}]) ============================")
-                for chunk_n in range(n_chunk):
-                    [
-                        [chk_beg_real, chk_beg_bytes],
-                        [chk_end_real, chk_end_bytes]
-                    ] = chunks_data[chunk_n]
+                if last_chk_real_beg is not None:
+                    assert last_chk_real_beg <  chk_real_beg
+                    if last_chk_real_end is not None:
+                        assert last_chk_real_end == chk_real_beg
+                    
+                if last_chk_real_end is not None:
+                    assert last_chk_real_end <  chk_real_end
+                    assert last_chk_real_end == chk_real_beg
+
+                last_chk_real_beg = chk_real_beg
+                last_chk_real_end = chk_real_end
+
+                if chk_beg in position_memoize:
+                    chk_bin_pos_beg, chk_first_pos_beg, chk_last_pos_beg = position_memoize[chk_beg]
+                else:
+                    chk_bin_pos_beg, chk_first_pos_beg, chk_last_pos_beg = getPos(inf, chk_real_beg, chk_bytes_beg)
+                    position_memoize[chk_beg] = (chk_bin_pos_beg, chk_first_pos_beg, chk_last_pos_beg)
+
+                if chk_end in position_memoize:
+                    chk_bin_pos_end, chk_first_pos_end, chk_last_pos_end = position_memoize[chk_end]
+                else:
+                    chk_bin_pos_end, chk_first_pos_end, chk_last_pos_end = getPos(inf, chk_real_end, chk_bytes_end)
+                    position_memoize[chk_end] = (chk_bin_pos_end, chk_first_pos_end, chk_last_pos_end)
+
+                chunks_data["chunk_begin" ][chunk_n] = {
+                    "real": chk_real_beg,
+                    "bytes": chk_bytes_beg,
+                    "bin_pos": chk_bin_pos_beg,
+                    "first_pos": chk_first_pos_beg,
+                    "last_pos": chk_last_pos_beg
+                }
+                
+                chunks_data["chunk_end"   ][chunk_n] = {
+                    "real": chk_real_end,
+                    "bytes": chk_bytes_end,
+                    "bin_pos": chk_bin_pos_end,
+                    "first_pos": chk_first_pos_end,
+                    "last_pos": chk_last_pos_end
+                }
+
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"======================== List of chunks (n=n_chunk[{chunk_n:15,d}]) ============================")
                     logger.debug(f"             chunk_n {chunk_n+1:15,d}/{n_chunk:15,d}")
-                    logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {chk_beg_real:15,d} {chk_beg_bytes:15,d}")
-                    logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {chk_end_real:15,d} {chk_end_bytes:15,d}")
-            ref["bins"][bin_n]["chunks"] = chunks_data
+                    logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {chk_real_beg:15,d} {chk_bytes_beg:15,d}")
+                    logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {chk_real_end:15,d} {chk_bytes_end:15,d}")
+                    logger.debug(f"               cnk_beg_1st_pos                                           uint64_t {chk_first_pos_beg:15,d}")
+                    logger.debug(f"               cnk_end_1st_pos                                           uint64_t {chk_first_pos_end:15,d}")
+                    logger.debug(f"               cnk_beg_bin_pos                                           uint64_t {chk_bin_pos_beg:15,d}")
+                    logger.debug(f"               cnk_end_bin_pos                                           uint64_t {chk_bin_pos_end:15,d}")
+                    logger.debug(f"               cnk_beg_lst_pos                                           uint64_t {chk_last_pos_beg:15,d}")
+                    logger.debug(f"               cnk_end_lst_pos                                           uint64_t {chk_last_pos_end:15,d}")
 
-            # chunks = [(b,e) for b,e in zip(chunks[0::2], chunks[1::2])]
-            # ref["bins"][bin_n]["chunks"] = chunks
-            # if getLogLevel() == "DEBUG":
-            #     logger.debug(f"======================== List of chunks (n=n_chunk[{n_chunk:15,d}]) ============================")
-            #     for chunk_n in range(n_chunk):
-            #         cnk_beg, cnk_end = chunks[chunk_n]
-            #         logger.debug(f"             chunk_n {chunk_n+1:15,d}/{n_chunk:15,d}")
-            #         logger.debug(f"               cnk_beg   Virtual file offset of the start of the chunk   uint64_t {cnk_beg:15,d}")
-            #         logger.debug(f"               cnk_end   Virtual file offset of the end of the chunk     uint64_t {cnk_end:15,d}")
+            ref["bins"      ][bin_n]["chunks"] = chunks_data
+            ref["bins_begin"]                  = chunks_data["chunk_begin"][ 0]
+            ref["bins_end"  ]                  = chunks_data["chunk_begin"][-1]
 
         (n_intv,)  = get_values('<i')
         logger.debug(f"     n_intv              # 16kb intervals (for the linear index)         int32_t  {n_intv:15,d}")
@@ -251,19 +384,51 @@ def read_tabix(infile):
 
         ref["n_intv"] = n_intv
 
-        ioffs = get_values('<' + ('Q'*n_intv))
+        ioffs    = get_values('<' + ('Q'*n_intv))
+        ioffs_be = [None] * n_intv
 
-        assert all([i >     0 for i in ioffs])
-        assert all([i < 2**63 for i in ioffs])
+        for intv_n in range(n_intv):
+            # logger.debug(f"         intv_n {intv_n+1:15,d}/{n_intv:15,d}")
+            ioff       = ioffs[intv_n]
 
-        ref["intvs"] = ioffs
+            assert ioff >     0
+            assert ioff < 2**63
 
-        if getLogLevel() == "DEBUG":
-            logger.debug(f"======================== List of distinct intervals (n=n_intv [{n_intv:15,d}]) ================")
-            for intv_n in range(n_intv):
-                # logger.debug(f"         intv_n {intv_n+1:15,d}/{n_intv:15,d}")
-                ioff = ioffs[intv_n]
-                logger.debug(f"         ioff            File offset of the first record in the interval uint64_t {ioff:15,d} [{intv_n+1:15,d}/{n_intv:15,d}]")
+            ioff_real  = ioff >> 16
+            ioff_bytes = ioff &  BLOCK_BYTES_MASK
+
+            assert ioff_real  >=     0
+            assert ioff_real  <  2**48
+
+            assert ioff_bytes >=          0
+            assert ioff_bytes <  BLOCK_SIZE
+            
+            ioff_bin_pos, ioff_first_pos, ioff_last_pos = -1, -1 ,-1
+            if ioff in position_memoize:
+                ioff_bin_pos, ioff_first_pos, ioff_last_pos = position_memoize[ioff]
+            else:
+                ioff_bin_pos, ioff_first_pos, ioff_last_pos = getPos(inf, ioff_real, ioff_bytes)
+            
+            ioffs_be[intv_n] = {
+                "real": ioff_real,
+                "bytes": ioff_bytes,
+                "bin_pos": ioff_bin_pos,
+                "first_pos": ioff_first_pos,
+                "last_pos": ioff_last_pos
+            }
+
+            if getLogLevel() == "DEBUG":
+                logger.debug(f"======================== List of distinct intervals (n=n_intv [{n_intv:15,d}]) ================")
+                logger.debug(f"         ioff            File offset of the first record in the interval uint64_t [{intv_n+1:15,d}/{n_intv:15,d}]")
+                logger.debug(f"           real          File offset of the first record in the interval uint48_t {ioff_real:15,d}")
+                logger.debug(f"           bytes         File offset of the first record in the interval uint16_t {ioff_bytes:15,d}")
+                logger.debug(f"           position 1st  File offset of the first record in the interval uint64_t {ioff_first_pos:15,d}")
+                logger.debug(f"           position bin  File offset of the first record in the interval uint64_t {ioff_bin_pos:15,d}")
+                logger.debug(f"           position lst  File offset of the first record in the interval uint64_t {ioff_last_pos:15,d}")
+
+        ref["intvs"] = ioffs_be
+
+
 
     n_no_coor = None
     try:
@@ -280,6 +445,7 @@ def read_tabix(infile):
     data["n_no_coor"] = n_no_coor
 
     fhd.close()
+    inf.close()
 
     logger.debug("finished reading")
 
