@@ -111,7 +111,7 @@
             "type": "integer",
             "title": "The format schema",
             "description": "Format (0: generic; 1: SAM; 2: VCF).",
-            "default": 0,
+            "default": 2,
             "examples": [
                 2
             ]
@@ -131,7 +131,7 @@
             "type": "integer",
             "title": "The col_beg schema",
             "description": "Column for the start of a region.",
-            "default": 0,
+            "default": 2,
             "examples": [
                 2
             ]
@@ -151,7 +151,7 @@
             "type": "string",
             "title": "The meta schema",
             "description": "Leading character for comment lines.",
-            "default": "",
+            "default": "#",
             "examples": [
                 "#"
             ]

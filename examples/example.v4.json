@@ -1,0 +1,106 @@
+{
+    "n_ref": 1,
+    "format": 2,
+    "col_seq": 1,
+    "col_beg": 2,
+    "col_end": 0,
+    "meta": "#",
+    "skip": 0,
+    "l_nm": 11,
+    "names": [
+     "SL2.50ch00"
+    ],
+    "refs": [
+     {
+      "ref_n": 0,
+      "ref_name": "SL2.50ch00",
+      "n_bin": 86,
+      "bins": [
+       {
+        "bin_n": 0,
+        "bin": 4681,
+        "n_chunk": 1,
+        "chunks": {
+         "chunk_begin": [
+          {
+           "real": 0,
+           "bytes": 29542,
+           "bin_pos": -1,
+           "first_pos": -1,
+           "last_pos": -1
+          }
+         ],
+         "chunk_end": [
+          {
+           "real": 124525,
+           "bytes": 19630,
+           "bin_pos": 16388,
+           "first_pos": 16141,
+           "last_pos": 17808
+          }
+         ]
+        }
+       },
+       {
+        "bin_n": 85,
+        "bin": 4766,
+        "n_chunk": 1,
+        "chunks": {
+         "chunk_begin": [
+          {
+           "real": 7021611,
+           "bytes": 4631,
+           "bin_pos": 1392700,
+           "first_pos": 1392519,
+           "last_pos": 1393971
+          }
+         ],
+         "chunk_end": [
+          {
+           "real": 7039684,
+           "bytes": 0,
+           "bin_pos": -1,
+           "first_pos": -1,
+           "last_pos": -1
+          }
+         ]
+        }
+       }
+      ],
+      "bins_begin": {
+       "real": 7021611,
+       "bytes": 4631,
+       "bin_pos": 1392700,
+       "first_pos": 1392519,
+       "last_pos": 1393971
+      },
+      "bins_end": {
+       "real": 7021611,
+       "bytes": 4631,
+       "bin_pos": 1392700,
+       "first_pos": 1392519,
+       "last_pos": 1393971
+      },
+      "n_intv": 86,
+      "intvs": [
+       {
+        "real": 0,
+        "bytes": 29542,
+        "bin_pos": -1,
+        "first_pos": -1,
+        "last_pos": -1
+       },
+       {
+        "real": 7021611,
+        "bytes": 4631,
+        "bin_pos": 1392700,
+        "first_pos": 1392519,
+        "last_pos": 1393971
+       }
+      ]
+     }
+    ],
+    "n_no_coor": null,
+    "__format_name__": "TBJ",
+    "__format_ver__": 4
+   }

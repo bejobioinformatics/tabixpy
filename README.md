@@ -116,18 +116,21 @@ http://samtools.github.io/hts-specs/SAMv1.pdf
 
 
 ```
-The random access method to be described next limits the uncompressed contents of each BGZF block
-to a maximum of 216 bytes of data. Thus while ISIZE is stored as a uint32 t as per the gzip format, in
-BGZF it is limited to the range [0, 65536]. BSIZE can represent BGZF block sizes in the range [1, 65536],
+The random access method to be described next limits the uncompressed contents
+of each BGZF block to a maximum of 216 bytes of data. Thus while ISIZE is
+stored as a uint32 t as per the gzip format, in BGZF it is limited to the range
+[0, 65536]. BSIZE can represent BGZF block sizes in the range [1, 65536],
 though typically BSIZE will be rather less than ISIZE due to compression.
 
 4.1.1 Random access
-BGZF files support random access through the BAM file index. To achieve this, the BAM file index uses
-virtual file offsets into the BGZF file. Each virtual file offset is an unsigned 64-bit integer, defined as:
-coffset<<16|uoffset, where coffset is an unsigned byte offset into the BGZF file to the beginning of a
-BGZF block, and uoffset is an unsigned byte offset into the uncompressed data stream represented by that
-BGZF block. Virtual file offsets can be compared, but subtraction between virtual file offsets and addition
-between a virtual offset and an integer are both disallowed.
+BGZF files support random access through the BAM file index. To achieve this,
+the BAM file index uses virtual file offsets into the BGZF file. Each virtual
+file offset is an unsigned 64-bit integer, defined as: coffset<<16|uoffset,
+where coffset is an unsigned byte offset into the BGZF file to the beginning of
+a BGZF block, and uoffset is an unsigned byte offset into the uncompressed data
+stream represented by that BGZF block. Virtual file offsets can be compared,
+but subtraction between virtual file offsets and addition between a virtual
+offset and an integer are both disallowed.
 ```
 
 TABIX
@@ -204,6 +207,7 @@ Schema
 ------
 
 https://jsonschema.net/home
+https://www.jsonschemavalidator.net/
 
 
 Example output
@@ -213,44 +217,78 @@ JSON
 
 ```JSON
 {
-    "__format_name__": "TBJ",
-    "__format_ver__": 2,
-    "n_ref": 1,
-    "format": 2,
-    "col_seq": 1,
-    "col_beg": 2,
-    "col_end": 0,
-    "meta": "#",
-    "skip": 0,
-    "l_nm": 11,
-    "names": [
-        "SL2.50ch00"
+ "n_ref": 1,
+ "format": 2,
+ "col_seq": 1,
+ "col_beg": 2,
+ "col_end": 0,
+ "meta": "#",
+ "skip": 0,
+ "l_nm": 11,
+ "names": [
+  "SL2.50ch00"
+ ],
+ "refs": [
+  {
+   "ref_n": 0,
+   "ref_name": "SL2.50ch00",
+   "n_bin": 86,
+   "bins": [
+    {
+     "bin_n": 0,
+     "bin": 4681,
+     "n_chunk": 1,
+     "chunks": {
+      "chunk_begin": [
+       {
+        "real": 0,
+        "bytes": 29542,
+        "bin_pos": -1,
+        "first_pos": -1,
+        "last_pos": -1
+       }
+      ],
+      "chunk_end": [
+       {
+        "real": 124525,
+        "bytes": 19630,
+        "bin_pos": 16388,
+        "first_pos": 16141,
+        "last_pos": 17808
+       }
+      ]
+     }
+    }
     ],
-    "refs": [{
-        "ref_n": 0,
-        "ref_name": "SL2.50ch00",
-        "n_bin": 86,
-        "bins": [{
-                "bin_n": 0,
-                "bin": 4681,
-                "n_chunk": 1,
-                "chunks": [
-                  [29542, 8160890030]
-                ]
-            },
-            {
-                "bin_n": 85,
-                "bin": 4766,
-                "n_chunk": 1,
-                "chunks": [
-                    [460168303127, 461352730624]
-                ]
-            }
-        ],
-        "n_intv": 86,
-        "intvs": [29542, 460168303127]
-    }],
-    "n_no_coor": null
+   "bins_begin": {
+    "real": 7021611,
+    "bytes": 4631,
+    "bin_pos": 1392700,
+    "first_pos": 1392519,
+    "last_pos": 1393971
+   },
+   "bins_end": {
+    "real": 7021611,
+    "bytes": 4631,
+    "bin_pos": 1392700,
+    "first_pos": 1392519,
+    "last_pos": 1393971
+   },
+   "n_intv": 86,
+   "intvs": [
+    {
+     "real": 7021611,
+     "bytes": 4631,
+     "bin_pos": 1392700,
+     "first_pos": 1392519,
+     "last_pos": 1393971
+    }
+   ]
+  }
+ ],
+ "n_no_coor": null,
+ "__format_name__": "TBJ",
+ "__format_ver__": 4
 }
 ```
 
