@@ -1,16 +1,34 @@
 tabixpy
 =======
 
+![Upload Python Package](https://github.com/bejobioinformatics/tabixpy/workflows/Upload%20Python%20Package/badge.svg)
+
 Tabix parser writtern in Python3.
 
-CI
---
-![Upload Python Package](https://github.com/bejobioinformatics/tabixpy/workflows/Upload%20Python%20Package/badge.svg)
+
+Website
+-------
+https://pypi.org/project/tabixpy/
 
 Install
 -------
 
+```bash
 pip install tabixpy
+```
+
+Usage
+-----
+
+```python
+import tabixpy
+
+ingz       = "example.vcf.gz"
+
+data       = tabixpy.read_tabix(ingz)
+
+tabixpy.save(data, ingz, compress=True)
+```
 
 Tabix
 -----
@@ -137,6 +155,7 @@ TABIX
 -----
 
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3042176/
+
 https://samtools.github.io/hts-specs/tabix.pdf
 
 ```
@@ -207,6 +226,7 @@ Schema
 ------
 
 https://jsonschema.net/home
+
 https://www.jsonschemavalidator.net/
 
 
