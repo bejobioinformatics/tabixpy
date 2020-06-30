@@ -8,13 +8,13 @@ sys.path.insert(0, '..')
 import tabixpy
 
 def runTest(testName, infile, expects):
-    ingz, _, tbj = tabixpy.get_filenames(infile)
+    ingz, _, tbj = tabixpy.getFilenames(infile)
 
     if DEBUG:
         tabixpy.setLogLevel(tabixpy.logging.INFO)
 
     if not os.path.exists(tbj):
-        data       = tabixpy.read_tabix(ingz)
+        data       = tabixpy.readTabix(ingz)
 
         tabixpy.save(data, ingz, compress=False)
 

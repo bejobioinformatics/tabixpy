@@ -80,7 +80,7 @@ class Tabix:
         if logLevel is not None:
             setLogLevel(logLevel)
 
-        self._ingz, self._inid, self._inbj = get_filenames(self._infile)
+        self._ingz, self._inid, self._inbj = getFilenames(self._infile)
 
         if os.path.exists(self._inbj):
             logger.info("reading TBJ file")
@@ -88,7 +88,7 @@ class Tabix:
 
         else:
             logger.info("reading Tabix file")
-            self._data   = read_tabix(self._ingz)
+            self._data   = readTabix(self._ingz)
 
     def save(self, overwrite=True, compress=True):
         if os.path.exists(self._inbj):
@@ -274,7 +274,7 @@ class openGzipStream():
         self._fhdf.close()
 
 
-def read_gzip_header(fp):
+def readGzipHeader(fp):
     #https://github.com/python/cpython/blob/3.8/Lib/gzip.py
     
     #http://www.htslib.org/doc/bgzip.html
@@ -343,14 +343,14 @@ def setLogLevel(level):
 def getLogLevel():
     return logging.getLevelName(logger.getEffectiveLevel())
 
-def gen_value_getter(fhd):
+def genValueGetter(fhd):
     def get_values(fmt):
         fmt_s = struct.calcsize(fmt)
         res   = struct.unpack(fmt, fhd.read(fmt_s))
         return res
     return get_values
 
-def get_filenames(infile):
+def getFilenames(infile):
     if infile.endswith(".tbi"):
         ingz     = infile[:-4]
         inid     = infile
@@ -363,7 +363,7 @@ def get_filenames(infile):
     return ingz, inid, inbj
 
 def load(ingz):
-    _, _, inbj = get_filenames(ingz)
+    _, _, inbj = getFilenames(ingz)
 
     compressed = None
     with open(inbj, "rb") as fhd:
@@ -393,11 +393,11 @@ def load(ingz):
 
     return data
 
-def save(data, ingz, compress=COMPRESS):
-    data["__format_name__"] = __format_name__
-    data["__format_ver__" ] = __format_ver__
+def save(data, ingz, compress=COMPRESS, ext=".tbj", format_name=__format_name__, format_ver=__format_ver__):
+    data["__format_name__"] = format_name
+    data["__format_ver__" ] = format_ver
 
-    outfileJ = ingz + ".tbj"
+    outfileJ = ingz + ext
 
     logger.info(f"saving  {outfileJ}")
 
@@ -453,7 +453,7 @@ def getBlock(filehandle, real_pos, block_len=None):
     filehandle.seek(real_pos, 0)
 
     if block_len is None:
-        block_len = read_gzip_header(filehandle)
+        block_len = readGzipHeader(filehandle)
 
     if block_len is None:
         raise IOError("invalid block length")
@@ -665,15 +665,15 @@ def getAllBlocks(filehandle):
         "numberRows": rows
     }
 
-def gen_all_blocks(infile):
+def genAllBlocks(infile):
     # setLogLevel(logging.DEBUG)
 
     logger.info(f"reading {infile}")
 
-    ingz, inid, inbj = get_filenames(infile)
+    ingz, inid, inbj = getFilenames(infile)
 
     inf        = open(ingz, "rb")
-    get_values = gen_value_getter(inf)
+    get_values = genValueGetter(inf)
     data       = getAllBlocks(inf)
 
     chroms     = data["chroms"]
@@ -692,16 +692,16 @@ def gen_all_blocks(infile):
 
     # return data
 
-def read_tabix(infile):
+def readTabix(infile):
     logger.info(f"reading {infile}")
 
-    ingz, inid, inbj = get_filenames(infile)
+    ingz, inid, inbj = getFilenames(infile)
 
     assert os.path.exists(inid), inid
 
     fhd        = gzip.open(inid, "rb")
     inf        = open(ingz, "rb")
-    get_values = gen_value_getter(fhd)
+    get_values = genValueGetter(fhd)
     data       = {}
 
     (magic,)   = get_values('<4s')
@@ -1072,8 +1072,8 @@ def read_tabix(infile):
 if __name__ == "__main__":
     # logging.info("__main__")
     infile     = sys.argv[1]
-    ingz, inid = get_filenames(infile)
-    data       = read_tabix(ingz, compress=True, verbosity=0)
+    ingz, inid = getFilenames(infile)
+    data       = readTabix(ingz, compress=True, verbosity=0)
 
     setLogLevel(logger.debug)
 
