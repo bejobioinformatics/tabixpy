@@ -61,6 +61,15 @@ console_handler.setFormatter(my_formatter)
 logger.addHandler(console_handler)
 logger.setLevel(logging.INFO)
 
+# samtools format specs:
+# https://samtools.github.io/hts-specs/SAMv1.pdf
+# https://github.com/xbrianh/bgzip/blob/master/bgzip/__init__.py
+bgzip_eof = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
+
+
+class EOF:
+    __slot__ = []
+    pass
 
 
 class Tabix:
@@ -151,6 +160,7 @@ class Tabix:
             for line in fhd:
                 yield line
 
+
 class openGzipStream():
     def __init__(self, infile, realPos, bytesPos, asLine=False, chrom=None, begin=None, end=None):
         logger.debug(f"infile {infile} realPos {realPos} bytesPos {bytesPos} asLine {asLine} chrom {chrom} begin {begin} end {end}")
@@ -198,17 +208,20 @@ class openGzipStream():
                 lines[0] = lastLine + lines[0]
                 lastLine = None
 
-            logger.debug(f"bn {bn} len(lines) {len(lines)} :: filter")
+            if getLogLevel() == "DEBUG":
+                logger.debug(f"bn {bn} len(lines) {len(lines)} :: filter")
             lines   = [line for line in lines if len(line) > 0 and line[0] != "#"] # filter out empty and comment lines 
             columns = [line.split("\t") for line in lines]
 
             if len(columns[-1]) != len(columns[1]): #incomplete last line
-                logger.debug(f"bn {bn} len(lines) {len(lines)} :: pop")
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"bn {bn} len(lines) {len(lines)} :: pop")
                 lastLine = lines.pop()
                 columns.pop()
 
             if len(columns[0]) != len(columns[1]): #incomplete first line
-                logger.debug(f"bn {bn} len(lines) {len(lines)} :: shift")
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"bn {bn} len(lines) {len(lines)} :: shift")
                 lines   = lines[1:]
                 columns = columns[1:]
 
@@ -216,27 +229,32 @@ class openGzipStream():
                 numCols = len(columns[0])
 
             if self._chrom is not None:
-                logger.debug(f"bn {bn} len(lines) {len(lines)} :: chrom {self._chrom}")
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"bn {bn} len(lines) {len(lines)} :: chrom {self._chrom}")
                 lines   = [line for ln, line in enumerate(lines) if columns[ln][0] == self._chrom]
                 columns = [col  for col      in columns          if col[0]         == self._chrom]
 
             if len(lines) == 0:
-                logger.debug(f"bn {bn} len(lines) == 0 :: return")
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"bn {bn} len(lines) == 0 :: return")
                 return
 
             for ln, line in enumerate(lines):
                 cols = columns[ln]
-                logger.debug(f"bn {bn} len(lines) == {len(lines)} :: chrom {self._chrom} begin {self._begin} end {self._end} :: ln {ln}")
+                if getLogLevel() == "DEBUG":
+                    logger.debug(f"bn {bn} len(lines) == {len(lines)} :: chrom {self._chrom} begin {self._begin} end {self._end} :: ln {ln}")
 
                 if self._begin is not None or self._end is not None:
                     pos = int(cols[1])
                     
                     if self._begin is not None and pos < self._begin:
-                        logger.debug(f" pos {pos} < self._begin {self._begin}")
+                        if getLogLevel() == "DEBUG":
+                            logger.debug(f" pos {pos} < self._begin {self._begin}")
                         continue
 
                     if self._end is not None and pos >= self._end:
-                        logger.debug(f"pos {pos} >= self._end {self._end}")
+                        if getLogLevel() == "DEBUG":
+                            logger.debug(f"pos {pos} >= self._end {self._end}")
                         return
 
                     if self._asLine:
@@ -255,14 +273,6 @@ class openGzipStream():
         self._fhdz.close()
         self._fhdf.close()
 
-# samtools format specs:
-# https://samtools.github.io/hts-specs/SAMv1.pdf
-# https://github.com/xbrianh/bgzip/blob/master/bgzip/__init__.py
-bgzip_eof = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
-
-class EOF:
-    __slot__ = []
-    pass
 
 def read_gzip_header(fp):
     #https://github.com/python/cpython/blob/3.8/Lib/gzip.py
@@ -494,20 +504,25 @@ def parseBlock(block, bytes_pos, chrom):
     assert len(block) > 0, f"empty block '{block}'"
     assert bytes_pos  < len(block)
 
-    rows      = [row for row in block.split("\n") if len(row) > 0 and row[0] != "#"]
     first_row = None
     last_row  = None
-    rows      = [row for row in rows if row.split("\t")[0] == chrom]
+    rows      = [row for row in block.split("\n") if len(row) > 0 and row[0] != "#"]
+    
+    if chrom is not None:
+        rows      = [row for row in rows if row.split("\t")[0] == chrom]
+
     num_rows  = len(rows)
 
     if num_rows == 0:
-        # logger.debug(f"num_rows {num_rows} == 0")
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} == 0")
         return -1, -1, -1, -1, -1, -1
 
     elif num_rows == 1:
         first_row = rows[0]
         last_row  = rows[0]
-        # logger.debug(f"num_rows {num_rows} == 1 :: first_row {first_row[:2]} last_row {last_row[:2]}")
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} == 1 :: first_row {first_row[:2]} last_row {last_row[:2]}")
     
     else:
         first_cols  = rows[ 0].split("\t")
@@ -517,16 +532,33 @@ def parseBlock(block, bytes_pos, chrom):
             first_cols  = second_cols
             num_rows   -= 1
         
-        assert first_cols[0] == chrom
+        assert chrom is None or first_cols[0] == chrom
         
         for i in range(len(rows)):
-            # logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d}")
-            last_cols   = rows[(i*-1)-1].split("\t")
-            if len(last_cols) >= 2 and last_cols[0] == first_cols[0] and last_cols[0] == chrom and int(last_cols[1]) > int(first_cols[1]):
-                # logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} == len(first_cols) {len(first_cols):3d} or last_cols[0] {last_cols[0]} == first_cols[0] {first_cols[0]} - last_cols[1] {last_cols[1]} == first_cols[1] {first_cols[1]}\n")
-                break
+            if getLogLevel() == "DEBUG":
+                logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d}")
+            
+            last_cols    = rows[(i*-1)-1].split("\t")
+
+            if len(last_cols) >= 2 and last_cols[0] == first_cols[0] and len(last_cols[1]) > 0:
+                try:
+                    last_cols_v  = int(last_cols[1])
+                except ValueError as e:
+                    raise ValueError(f"invalid last_col position {last_cols} :: {e}")
+                
+                try:
+                    first_cols_v = int(first_cols[1])
+                except ValueError as e:
+                    raise ValueError(f"invalid fist_col position {first_cols} :: {e}")
+            
+                if last_cols_v > first_cols_v:
+                    if chrom is None or last_cols[0] == chrom: 
+                        # if getLogLevel() == "DEBUG":
+                        #     logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} == len(first_cols) {len(first_cols):3d} or last_cols[0] {last_cols[0] or None} == first_cols[0] {first_cols[0] or None} - last_cols[1] {last_cols[1] or None} == first_cols[1] {first_cols[1] or None}\n")
+                        break
             else:
-                # logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} != len(first_cols) {len(first_cols):3d} or last_cols[0] {last_cols[0]} != first_cols[0] {first_cols[0]} - last_cols[1] {last_cols[1]} == first_cols[1] {first_cols[1]}")
+                # if getLogLevel() == "DEBUG":
+                #     logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} != len(first_cols) {len(first_cols):3d} or last_cols {last_cols} first_cols {first_cols}")
                 num_rows   -= 1
 
     assert len(first_cols) >= len(last_cols), f"{len(first_cols)} == {len(last_cols)}\n{len(first_cols)} {first_cols}\n{len(last_cols)} {last_cols}"
@@ -539,7 +571,7 @@ def parseBlock(block, bytes_pos, chrom):
     last_pos    = last_cols[1]
     last_pos    = int(last_pos)
 
-    assert first_chrom == last_chrom, f"first_chrom {first_chrom} == last_chrom {last_chrom}"
+    assert chrom is None or first_chrom == last_chrom, f"first_chrom {first_chrom} == last_chrom {last_chrom}"
 
     bin_reg    = block[bytes_pos:].split("\n")[0]
     bin_cols   = bin_reg.split("\t")
@@ -598,7 +630,7 @@ def getAllBlocks(filehandle):
     e              = 0
 
     while block_len >= 0:
-        _, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows = getPos(filehandle, lastReal, 0)
+        _, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows = getPos(filehandle, lastReal, 0, None)
         
         if block_len < 0:
             break
@@ -614,7 +646,7 @@ def getAllBlocks(filehandle):
             lasts     .append([])
             rows      .append([])
 
-        logger.debug(f"getAllPositions {e:4,d} :: lastReal {lastReal:9,d} first_pos {first_pos:9,d} last_pos {last_pos:9,d} block_len {block_len:9,d} block_size {block_size:9,d} chrom_name {chrom_name} num_cols {num_cols:3,d} num_rows {num_rows:3,d}")
+        logger.info(f"getAllPositions {e:4,d} :: lastReal {lastReal:9,d} first_pos {first_pos:9,d} last_pos {last_pos:9,d} block_len {block_len:9,d} block_size {block_size:9,d} chrom_name {chrom_name} num_cols {num_cols:3,d} num_rows {num_rows:3,d}")
         
         reals [-1].append(lastReal)
         firsts[-1].append(first_pos)
@@ -634,13 +666,31 @@ def getAllBlocks(filehandle):
     }
 
 def gen_all_blocks(infile):
+    # setLogLevel(logging.DEBUG)
+
     logger.info(f"reading {infile}")
 
     ingz, inid, inbj = get_filenames(infile)
 
     inf        = open(ingz, "rb")
-    get_values = gen_value_getter(fhd)
+    get_values = gen_value_getter(inf)
     data       = getAllBlocks(inf)
+
+    chroms     = data["chroms"]
+    numCols    = data["numCols"]
+    reals      = data["realPositions"]
+    firsts     = data["firstPositions"]
+    lasts      = data["lastPositions"]
+    rows       = data["numberRows"]
+
+    logger.info(f"chroms  {chroms}")
+    logger.info(f"numCols {numCols}")
+    logger.info(f"reals   {reals[0][:10]}-{reals[-1][-10:]}")
+    logger.info(f"firsts  {firsts[0][:10]}-{firsts[-1][-10:]}")
+    logger.info(f"lasts   {lasts[0][:10]}-{lasts[-1][-10:]}")
+    logger.info(f"rows    {rows[0][:10]}-{rows[-1][-10:]}")
+
+    # return data
 
 def read_tabix(infile):
     logger.info(f"reading {infile}")
