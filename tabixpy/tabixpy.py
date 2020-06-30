@@ -15,6 +15,7 @@ BLOCK_SIZE        = 2**16
 FILE_BYTES_MASK   = 0xFFFFFFFFFFFFF0000
 BLOCK_BYTES_MASK  = 0x0000000000000FFFF
 MAX_BIN           = (((1<<18)-1)//7)
+GZIP_MAGIC        = b"\x1F\x8B"
 
 ALL_BLOCKS_VER = 1
 ALL_BLOCKS_NAM = "TBK"
@@ -381,7 +382,7 @@ def load(ingz):
         if firstChars[0] == 123: # { 123
             compressed = False
         else:
-            assert firstChars == b"\x1F\x8B", firstChars
+            assert firstChars == GZIP_MAGIC, firstChars
             compressed = True
 
     is_compressed = "compressed json" if compressed else "json"
@@ -1096,7 +1097,12 @@ def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_
         logger.info(header_rev)
         assert header_rev == header_val
 
-    with open(filename + ext, 'wb') as fhd:
+    opener   = open
+    if compress:
+        logger.info("compressing")
+        opener = gzip.open
+
+    with opener(filename + ext, 'wb') as fhd:
         fhd.write(header_dat)
 
         for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
@@ -1122,11 +1128,40 @@ def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_
 
     return 
 
-def loadAllBlocks(filename, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
-    logger.info(f" loading {filename}{ext}")
+def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
+    indexFile = filename + ext
+    logger.info(f" loading {indexFile}")
     m = hashlib.sha256()
 
-    with open(filename + ext, 'rb') as fhd:
+    compressed = None
+    with open(indexFile, "rb") as fhd:
+        firstChars = fhd.read( 8 + len(ALL_BLOCKS_NAM) )
+        compressed = None
+
+        if firstChars[:2] == GZIP_MAGIC:
+            compressed = True
+        else:
+            fmt = firstChars[8:]
+            
+            try:
+                fmt = fmt.decode()
+            except:
+                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+            
+            if fmt == ALL_BLOCKS_NAM:
+                compressed = False
+            else:
+                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+
+        if compressed is None:
+            raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+
+    opener   = open
+    if compressed:
+        logger.info("decompressing")
+        opener = gzip.open
+
+    with opener(filename + ext, 'rb') as fhd:
         getter      = genStructValueGetter(fhd, returnBytes=True)
         
         ((fmt_len, ), d) = getter("<Q")
