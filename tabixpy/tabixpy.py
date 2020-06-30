@@ -4,6 +4,7 @@ import gzip
 import struct
 import json
 import logging
+import hashlib
 
 __format_ver__    = 5
 __format_name__   = "TBJ"
@@ -14,6 +15,11 @@ BLOCK_SIZE        = 2**16
 FILE_BYTES_MASK   = 0xFFFFFFFFFFFFF0000
 BLOCK_BYTES_MASK  = 0x0000000000000FFFF
 MAX_BIN           = (((1<<18)-1)//7)
+
+ALL_BLOCKS_VER = 1
+ALL_BLOCKS_NAM = "TBK"
+ALL_BLOCKS_EXT = ".tbk"
+ALL_BLOCKS_EOF = bytes.fromhex('000102030405060708090A0B0C0D0E0F')
 
 # Custom formatter
 #https://stackoverflow.com/questions/14844970/modifying-logging-message-format-based-on-message-logging-level-in-python3
@@ -343,12 +349,16 @@ def setLogLevel(level):
 def getLogLevel():
     return logging.getLevelName(logger.getEffectiveLevel())
 
-def genValueGetter(fhd):
-    def get_values(fmt):
+def genStructValueGetter(fhd, returnBytes=False):
+    def getValues(fmt):
         fmt_s = struct.calcsize(fmt)
-        res   = struct.unpack(fmt, fhd.read(fmt_s))
-        return res
-    return get_values
+        pack  = fhd.read(fmt_s)
+        res   = struct.unpack(fmt, pack)
+        if returnBytes:
+            return res, pack
+        else:
+            return res
+    return getValues
 
 def getFilenames(infile):
     if infile.endswith(".tbi"):
@@ -617,81 +627,6 @@ def getPos(filehandle, real_pos, bytes_pos, chrom):
 
     return bin_pos, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows
 
-def getAllBlocks(filehandle):
-    block_len      = 0
-    lastReal       = 0
-    chroms         = []
-    lastChrom      = None
-    numCols        = None
-    reals          = []
-    firsts         = []
-    lasts          = []
-    rows           = []
-    e              = 0
-
-    while block_len >= 0:
-        _, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows = getPos(filehandle, lastReal, 0, None)
-        
-        if block_len < 0:
-            break
-        
-        if numCols is None:
-            numCols = num_cols
-
-        if lastChrom != chrom_name:
-            lastChrom = chrom_name
-            chroms    .append(chrom_name)
-            reals     .append([])
-            firsts    .append([])
-            lasts     .append([])
-            rows      .append([])
-
-        logger.info(f"getAllPositions {e:4,d} :: lastReal {lastReal:9,d} first_pos {first_pos:9,d} last_pos {last_pos:9,d} block_len {block_len:9,d} block_size {block_size:9,d} chrom_name {chrom_name} num_cols {num_cols:3,d} num_rows {num_rows:3,d}")
-        
-        reals [-1].append(lastReal)
-        firsts[-1].append(first_pos)
-        lasts [-1].append(last_pos)
-        rows  [-1].append(num_rows)
-
-        lastReal += block_len
-        e        += 1
-
-    return {
-        "chroms": chroms,
-        "numCols": numCols,
-        "realPositions": reals,
-        "firstPositions": firsts,
-        "lastPositions": lasts,
-        "numberRows": rows
-    }
-
-def genAllBlocks(infile):
-    # setLogLevel(logging.DEBUG)
-
-    logger.info(f"reading {infile}")
-
-    ingz, inid, inbj = getFilenames(infile)
-
-    inf        = open(ingz, "rb")
-    get_values = genValueGetter(inf)
-    data       = getAllBlocks(inf)
-
-    chroms     = data["chroms"]
-    numCols    = data["numCols"]
-    reals      = data["realPositions"]
-    firsts     = data["firstPositions"]
-    lasts      = data["lastPositions"]
-    rows       = data["numberRows"]
-
-    logger.info(f"chroms  {chroms}")
-    logger.info(f"numCols {numCols}")
-    logger.info(f"reals   {reals[0][:10]}-{reals[-1][-10:]}")
-    logger.info(f"firsts  {firsts[0][:10]}-{firsts[-1][-10:]}")
-    logger.info(f"lasts   {lasts[0][:10]}-{lasts[-1][-10:]}")
-    logger.info(f"rows    {rows[0][:10]}-{rows[-1][-10:]}")
-
-    # return data
-
 def readTabix(infile):
     logger.info(f"reading {infile}")
 
@@ -701,7 +636,7 @@ def readTabix(infile):
 
     fhd        = gzip.open(inid, "rb")
     inf        = open(ingz, "rb")
-    get_values = genValueGetter(fhd)
+    get_values = genStructValueGetter(fhd)
     data       = {}
 
     (magic,)   = get_values('<4s')
@@ -1068,6 +1003,226 @@ def readTabix(infile):
     logger.debug("finished reading")
 
     return data
+
+
+def getAllBlocks(filehandle):
+    block_len      = 0
+    lastReal       = 0
+    chroms         = []
+    lastChrom      = None
+    numCols        = None
+    reals          = []
+    firsts         = []
+    lasts          = []
+    rows           = []
+    e              = 0
+
+    while block_len >= 0:
+        _, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows = getPos(filehandle, lastReal, 0, None)
+        
+        if block_len < 0:
+            break
+        
+        if numCols is None:
+            numCols = num_cols
+
+        if lastChrom != chrom_name:
+            lastChrom = chrom_name
+            chroms    .append(chrom_name)
+            reals     .append([])
+            firsts    .append([])
+            lasts     .append([])
+            rows      .append([])
+
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"getAllPositions {e:4,d} :: lastReal {lastReal:9,d} first_pos {first_pos:9,d} last_pos {last_pos:9,d} block_len {block_len:9,d} block_size {block_size:9,d} chrom_name {chrom_name} num_cols {num_cols:3,d} num_rows {num_rows:3,d}")
+        
+        reals [-1].append(lastReal)
+        firsts[-1].append(first_pos)
+        lasts [-1].append(last_pos)
+        rows  [-1].append(num_rows)
+
+        lastReal += block_len
+        e        += 1
+
+    res = {
+        "chroms": chroms,
+        "numCols": numCols,
+        "chromSizes": [len(d) for d in rows],
+        "realPositions": reals,
+        "firstPositions": firsts,
+        "lastPositions": lasts,
+        "numberRows": rows,
+    }
+
+    res["chromLength"] = sum(res["chromSizes"])
+    
+    return res
+
+def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
+    logger.info(f" saving {filename}{ext}")
+
+    flatten     = lambda l: (item for sublist in l for item in sublist)
+    chromLength = data["chromLength"]
+    header      = {
+        "chroms"     : data["chroms"],
+        "numCols"    : data["numCols"],
+        "chromSizes" : data["chromSizes"],
+        "chromLength": data["chromLength"]
+    }
+    headerJ     = json.dumps(header)
+
+    header_fmts = [
+        ["Q"                   , len(format_name)     ],
+        [f"{len(format_name)}s", format_name.encode() ],
+        ["Q"                   , format_ver           ],
+        ["Q"                   , len(headerJ)         ],
+        [f"{len(headerJ)}s"    , headerJ.encode()     ]
+    ]
+    
+    m = hashlib.sha256()
+
+    header_fmt  = "<" + "".join([h[0] for h in header_fmts])
+    logger.info(f"header_fmt '{header_fmt}'")
+    header_val  = [h[1] for h in header_fmts]
+    header_dat  = struct.pack(header_fmt, *header_val )
+    logger.info(header_dat)
+    logger.info(header_val)
+    m.update(header_dat)
+
+    if getLogLevel() == "DEBUG":
+        header_rev  = struct.unpack(header_fmt, header_dat)
+        header_rev  = list(header_rev)
+        logger.info(header_rev)
+        assert header_rev == header_val
+
+    with open(filename + ext, 'wb') as fhd:
+        fhd.write(header_dat)
+
+        for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
+            logger.info(f"writing {lstK} - {chromLength}")
+            lst  = data[lstK]
+            lstD = struct.pack(f"<{chromLength}Q"     , *flatten(lst))
+            fhd.write(lstD)
+            m.update(lstD)
+
+        digestHex  = m.hexdigest()
+        digestLen  = len(digestHex)
+        digestSize = struct.pack(f"<Q", digestLen)
+        m.update(digestSize)
+        fhd.write(digestSize)
+        digestHex  = m.hexdigest()
+
+        digest = struct.pack(f"<{digestLen}s", digestHex.encode())
+        fhd.write(digest)
+        
+        logger.info(digestHex)
+
+        fhd.write(ALL_BLOCKS_EOF)
+
+    return 
+
+def loadAllBlocks(filename, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
+    logger.info(f" loading {filename}{ext}")
+    m = hashlib.sha256()
+
+    with open(filename + ext, 'rb') as fhd:
+        getter      = genStructValueGetter(fhd, returnBytes=True)
+        
+        ((fmt_len, ), d) = getter("<Q")
+        m.update(d)
+        logger.info(f"fmt_len    {fmt_len}")
+
+        assert fmt_len == len(format_name), f"fmt_len {fmt_len} == len(format_name) {len(format_name)}"
+
+        ((fmt_nam, ), d) = getter(f"<{fmt_len}s")
+        m.update(d)
+        fmt_nam     = fmt_nam.decode()
+        logger.info(f"fmt_nam    {fmt_nam}")
+
+        assert fmt_nam == format_name, f"fmt_nam {fmt_nam} == format_name {format_name}"
+
+        ((fmt_ver, ), d) = getter("<Q")
+        m.update(d)
+        logger.info(f"fmt_ver    {fmt_ver}")
+        assert fmt_ver == format_ver, f"fmt_ver {fmt_ver} == format_ver {format_ver}"
+
+        ((lenHeaderJ, ), d) = getter("<Q")
+        m.update(d)
+        logger.info(f"lenHeaderJ {lenHeaderJ}")
+
+        ((headerJ, ), d) = getter(f"<{lenHeaderJ}s")
+        m.update(d)
+        headerJ     = headerJ.decode()
+        header      = json.loads(headerJ)
+        logger.info(f"header     {header}")
+
+        chromLength = header["chromLength"]
+
+        for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
+            logger.info(f"reading {lstK}")
+            header[lstK] = []
+            for chromSize in header["chromSizes"]:
+                logger.info(f" reading {chromSize} values")
+                (chromData, d) = getter(f"<{chromSize}Q")
+                m.update(d)
+                header[lstK].append(chromData)
+
+        ((digestLen, ), d) = getter("<Q")
+        m.update(d)
+        logger.info(f"digestLen  {digestLen}")
+
+        ((digestHex, ), _)  = getter(f"<{digestLen}s")
+        digestHex = digestHex.decode()
+        logger.info(f"digestHex  {digestHex}")
+        assert digestHex == m.hexdigest()
+
+        eof = fhd.read(len(ALL_BLOCKS_EOF))
+        
+        assert eof == ALL_BLOCKS_EOF
+
+        assert len(fhd.read()) == 0
+
+    return header
+
+"""
+python
+import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
+import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
+
+import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
+import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
+"""
+
+
+def genAllBlocks(infile):
+    # setLogLevel(logging.DEBUG)
+
+    logger.info(f"reading {infile}")
+
+    ingz, inid, inbj = getFilenames(infile)
+
+    inf        = open(ingz, "rb")
+    get_values = genStructValueGetter(inf)
+    data       = getAllBlocks(inf)
+
+    chroms     = data["chroms"]
+    numCols    = data["numCols"]
+    reals      = data["realPositions"]
+    firsts     = data["firstPositions"]
+    lasts      = data["lastPositions"]
+    rows       = data["numberRows"]
+
+    logger.info(f"chroms  {chroms}")
+    logger.info(f"numCols {numCols}")
+    logger.info(f"reals   {reals[0][:10]}-{reals[-1][-10:]}")
+    logger.info(f"firsts  {firsts[0][:10]}-{firsts[-1][-10:]}")
+    logger.info(f"lasts   {lasts[0][:10]}-{lasts[-1][-10:]}")
+    logger.info(f"rows    {rows[0][:10]}-{rows[-1][-10:]}")
+
+    saveAllBlocks(ingz, data)
+    # return data
+
 
 if __name__ == "__main__":
     # logging.info("__main__")
