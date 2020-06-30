@@ -1,12 +1,17 @@
 import os
 import sys
 
+DEBUG = False
+
 sys.path.insert(0, '..')
 
 import tabixpy
 
-def runTest(infile, expects):
+def runTest(testName, infile, expects):
     ingz, _, tbj = tabixpy.get_filenames(infile)
+
+    if DEBUG:
+        tabixpy.setLogLevel(tabixpy.logging.INFO)
 
     if not os.path.exists(tbj):
         data       = tabixpy.read_tabix(ingz)
@@ -23,18 +28,19 @@ def runTest(infile, expects):
 
     # assert data == data2
 
+    if DEBUG:
+        tabixpy.setLogLevel(tabixpy.logging.DEBUG)
+
     tb = tabixpy.Tabix(ingz)
     tb.save(overwrite=False)
-    tabixpy.logger.info(tb.chromosomes)
+    tabixpy.logger.debug(tb.chromosomes)
 
     for test_num, (chrom_idx, begin, end, minPos, maxPos, count) in enumerate(expects):
         chrom = tb.chromosomes[chrom_idx]
 
-        tabixpy.logger.info(f"test_num {test_num} chrom_idx {chrom_idx} chrom {chrom}, begin {begin}, end {end}, minPos {minPos}, maxPos {maxPos}")
+        tabixpy.logger.info(f"testName {testName} test_num {test_num} chrom_idx {chrom_idx} chrom {chrom}, begin {begin}, end {end}, minPos {minPos}, maxPos {maxPos}")
         
         vals = list(tb.getChromosomeIter(chrom, begin=begin, end=end))
-
-        assert len(vals) == count, f"{len(vals)} == {count}"
 
         if len(vals) > 0:
             assert int(vals[ 0][1]) == minPos, f"{vals[ 0][1]} == {minPos}"
@@ -48,44 +54,47 @@ def runTest(infile, expects):
                 for row_num, row in enumerate(vals):
                     tabixpy.logger.info(f"{row_num+1} {row[:2]}")
 
+        assert len(vals) == count, f"{len(vals)} == {count}"
+
+def runTests(tests):
+    for testNum, (infile, expects) in enumerate(tests):
+        runTest(testNum, infile, expects)
+
 def main():
     # tabixpy.setLogLevel(tabixpy.logging.DEBUG)
 
-    tabixpy.logger.debug("DEBUGGING")
-
     tests = [
-        # [
-        #     "annotated_tomato_150.100000.vcf.gz.tbi",
-        #     # return
-        #     # 1_375_671 - 1_378_902 [-2]
-        #     # 1_392_519 - 1_393_971 [-1]
-        #     # 1_393_980 - 1_395_108
-        #     # 1_393_971
-        #     # 1_395_638 last value
-        #     # 1_395_108
-        #     [
-        #         [0, 1_375_671, None,      1_375_671, 1_395_638, 1_120],
-        #         [0, 1_375_672, None,      1_375_685, 1_395_638, 1_119], #last to last bin
-        #         [0, 1_392_519, None,      1_392_519, 1_395_638,   263], #last bin
-        #         [0, 1_392_520, None,      1_392_520, 1_395_638,   262], #last bin
-        #         [0, 1_395_638, None,      1_395_638, 1_395_638,     1], #last value
-        #         [0, 1_392_520, 1_395_638, 1_392_520, 1_395_632,   261],
-        #         [0, 1_395_639, None,      None,      None,          0],
-        #     ]
-        # ],
+        [
+            "annotated_tomato_150.100000.vcf.gz.tbi",
+            # return
+            # 1_375_671 - 1_378_902 [-2]
+            # 1_392_519 - 1_393_971 [-1]
+            # 1_393_980 - 1_395_108
+            # 1_393_971
+            # 1_395_638 last value
+            # 1_395_108
+            [
+                [0, 1_375_671, None,      1_375_671, 1_395_638, 1_120],
+                [0, 1_375_672, None,      1_375_685, 1_395_638, 1_119], #last to last bin
+                [0, 1_392_519, None,      1_392_519, 1_395_638,   263], #last bin
+                [0, 1_392_520, None,      1_392_520, 1_395_638,   262], #last bin
+                [0, 1_395_638, None,      1_395_638, 1_395_638,     1], #last value
+                [0, 1_392_520, 1_395_638, 1_392_520, 1_395_632,   261],
+                [0, 1_395_639, None,      None,      None,          0],
+            ]
+        ],
 
         [
             "annotated_tomato_150.SL2.50ch00-01-02-03.vcf.gz",
             [
-                # [0, 1_375_671,      None, 1_375_671, 1_395_638, 1_120],
-                # [0, 1_375_672,      None, 1_375_685, 1_395_638, 1_119], #last to last bin
-                # [0, 1_392_519,      None, 1_392_519, 1_395_638,   263], #last bin
-                # [0, 1_392_520,      None, 1_392_520, 1_395_638,   262], #last bin
-                # [0, 1_395_638,      None, 1_395_638, 1_395_638,     1], #last value
-                # [0, 1_392_520, 1_395_638, 1_392_520, 1_395_632,   261],
-                # [0, 1_395_639,      None,      None,      None,     0],
-
-                # [1,       189,       189,     None,       None,     0],
+                [0, 1_375_671,      None, 1_375_671, 1_395_638, 1_120],
+                [0, 1_375_672,      None, 1_375_685, 1_395_638, 1_119], #last to last bin
+                [0, 1_392_519,      None, 1_392_519, 1_395_638,   263], #last bin
+                [0, 1_392_520,      None, 1_392_520, 1_395_638,   262], #last bin
+                [0, 1_395_638,      None, 1_395_638, 1_395_638,     1], #last value
+                [0, 1_392_520, 1_395_638, 1_392_520, 1_395_632,   261],
+                [0, 1_395_639,      None,      None,      None,     0],
+                [1,       189,       189,     None,       None,     0],
                 [1,       190,       285,      190,        190,     1],
                 [1,       190,       286,      190,        190,     1],
                 [1,       190,       287,      190,        286,     2]
@@ -94,9 +103,7 @@ def main():
     ]
 
 
-    for infile, expects in tests:
-        runTest(infile, expects)
-
+    runTests(tests)
 
 
 

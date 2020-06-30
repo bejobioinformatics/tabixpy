@@ -19,8 +19,8 @@ MAX_BIN           = (((1<<18)-1)//7)
 #https://stackoverflow.com/questions/14844970/modifying-logging-message-format-based-on-message-logging-level-in-python3
 class CustomConsoleFormatter(logging.Formatter):
     _fmts = {
-        logging.INFO    : "NOSET   : %(msg)s",
-        logging.DEBUG   : "DEBUG   : %(asctime)8s - %(name)-7s/%(module)-7ss/%(funcName)-12s/%(lineno)3d - %(msg)s",
+        # logging.NOSET   : "NOSET   : %(msg)s",
+        logging.DEBUG   : "DEBUG   : %(asctime)8s - %(name)-7s/%(module)-7s/%(funcName)-12s/%(lineno)3d - %(msg)s",
         logging.INFO    : "INFO    : %(msg)s",
         logging.WARNING : "WARNING : %(msg)s",
         logging.ERROR   : "ERROR   : %(name)-7s/%(module)-7ss/%(funcName)-12s/%(lineno)3d - %(msg)s",
@@ -64,11 +64,12 @@ logger.setLevel(logging.INFO)
 
 
 class Tabix:
-    def __init__(self, ingz, logLevel=logging.INFO):
+    def __init__(self, ingz, logLevel=None):
         self._infile  = ingz
         self._numCols = None
 
-        setLogLevel(logLevel)
+        if logLevel is not None:
+            setLogLevel(logLevel)
 
         self._ingz, self._inid, self._inbj = get_filenames(self._infile)
 
@@ -139,11 +140,11 @@ class Tabix:
             r["chunk_n"] = 0
             intvsBegin = r
 
-        logger.debug(f"begin      {begin}")
-        logger.debug(f"end        {end}"  )
-        logger.debug(f"intvs[ 0]  {intvs[ 0]}")
-        logger.debug(f"intvs[-2]  {intvs[-2]}")
-        logger.debug(f"intvs[-1]  {intvs[-1]}")
+        # logger.debug(f"begin      {begin}")
+        # logger.debug(f"end        {end}"  )
+        # logger.debug(f"intvs[ 0]  {intvs[ 0]}")
+        # logger.debug(f"intvs[-2]  {intvs[-2]}")
+        # logger.debug(f"intvs[-1]  {intvs[-1]}")
         logger.debug(f"intvsBegin {intvsBegin}")
 
         with openGzipStream(self._ingz, intvsBegin["real"], 0, asLine=asLine, chrom=chrom, begin=begin, end=end) as fhd:
@@ -198,16 +199,16 @@ class openGzipStream():
                 lastLine = None
 
             logger.debug(f"bn {bn} len(lines) {len(lines)} :: filter")
-            # lines   = [line for line in lines if len(line) > 0 and line[0] != "#"] # filter out empty and comment lines 
+            lines   = [line for line in lines if len(line) > 0 and line[0] != "#"] # filter out empty and comment lines 
             columns = [line.split("\t") for line in lines]
 
             if len(columns[-1]) != len(columns[1]): #incomplete last line
-                # logger.debug(f"bn {bn} len(lines) {len(lines)} :: pop")
+                logger.debug(f"bn {bn} len(lines) {len(lines)} :: pop")
                 lastLine = lines.pop()
                 columns.pop()
 
             if len(columns[0]) != len(columns[1]): #incomplete first line
-                # logger.debug(f"bn {bn} len(lines) {len(lines)} :: shift")
+                logger.debug(f"bn {bn} len(lines) {len(lines)} :: shift")
                 lines   = lines[1:]
                 columns = columns[1:]
 
@@ -215,31 +216,34 @@ class openGzipStream():
                 numCols = len(columns[0])
 
             if self._chrom is not None:
-                # logger.debug(f"bn {bn} len(lines) {len(lines)} :: chrom {self._chrom}")
+                logger.debug(f"bn {bn} len(lines) {len(lines)} :: chrom {self._chrom}")
                 lines   = [line for ln, line in enumerate(lines) if columns[ln][0] == self._chrom]
                 columns = [col  for col      in columns          if col[0]         == self._chrom]
 
             if len(lines) == 0:
-                # logger.debug(f"bn {bn} len(lines) == 0 :: return")
+                logger.debug(f"bn {bn} len(lines) == 0 :: return")
                 return
 
             for ln, line in enumerate(lines):
                 cols = columns[ln]
-                # logger.debug(f"bn {bn} len(lines) == {len(lines)} :: chrom {self._chrom} begin {self._begin} end {self._end} :: ln {ln}\nline {line}\n\n")
+                logger.debug(f"bn {bn} len(lines) == {len(lines)} :: chrom {self._chrom} begin {self._begin} end {self._end} :: ln {ln}")
 
                 if self._begin is not None or self._end is not None:
                     pos = int(cols[1])
-                    if self._begin is None or pos >= self._begin:
-                        if self._end is None or pos < self._end:
-                            # logger.debug(f"bn {bn} len(lines) == {len(lines)} :: chrom {self._chrom} begin {self._begin} end {self._end} :: ln {ln}\nline {line}\n\n")
-                            if self._asLine:
-                                yield line
-                            else:
-                                yield cols
-                        else:
-                            return
-                    else:
+                    
+                    if self._begin is not None and pos < self._begin:
+                        logger.debug(f" pos {pos} < self._begin {self._begin}")
+                        continue
+
+                    if self._end is not None and pos >= self._end:
+                        logger.debug(f"pos {pos} >= self._end {self._end}")
                         return
+
+                    if self._asLine:
+                        yield line
+                    else:
+                        yield cols
+
                 else:
                     if self._asLine:
                         yield line
@@ -251,6 +255,77 @@ class openGzipStream():
         self._fhdz.close()
         self._fhdf.close()
 
+# samtools format specs:
+# https://samtools.github.io/hts-specs/SAMv1.pdf
+# https://github.com/xbrianh/bgzip/blob/master/bgzip/__init__.py
+bgzip_eof = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
+
+class EOF:
+    __slot__ = []
+    pass
+
+def read_gzip_header(fp):
+    #https://github.com/python/cpython/blob/3.8/Lib/gzip.py
+    
+    #http://www.htslib.org/doc/bgzip.html
+    # the gzip header includes an extra sub-field with identifier 'BC' 
+    # and the length of the compressed block, including all headers.
+    #
+    # http://samtools.github.io/hts-specs/SAMv1.pdf
+    # 1. The F.EXTRA bit in the header is set to indicate that extra fields
+    #    are present.
+    #
+    # 2. The extra field used by BGZF uses the two subfield ID values 66 and 67
+    #    (ascii ‘BC’)
+    #
+    # 3. The length of the BGZF extra field payload (field LEN in the gzip
+    #    specification) is 2 (two bytes of payload).
+    #
+    # 4. The payload of the BGZF extra field is a 16-bit unsigned integer in
+    #    little endian format. This integer gives the size of the containing
+    #    BGZF block minus one.
+
+    
+    FTEXT, FHCRC, FEXTRA, FNAME, FCOMMENT = 1, 2, 4, 8, 16
+
+    tell  = fp.tell()
+
+    magic = fp.read(2)
+    if magic == b'':
+        return False
+
+    if magic != b'\037\213':
+        raise IOError('Not a gzipped file (%r)' % magic)
+
+    (method, flag, last_mtime) = struct.unpack("<BBIxx", fp.read(8))
+
+    if method != 8:
+        raise IOError('Unknown compression method')
+
+    if flag & FEXTRA:
+        # Read & discard the extra field, if present
+        extra_len, = struct.unpack("<H", fp.read(2))
+        extra_data = fp.read(extra_len)
+        # logger.debug(f" extra length {extra_len}")
+        # logger.debug(f" extra data   {extra_data}")
+        if extra_len >= 4:
+            if b"BC" in extra_data:
+                bci            = extra_data.index(b'BC')
+                subfield_len_d = extra_data[bci+2:bci+2+2]
+                subfield_len,  = struct.unpack("<H", subfield_len_d)
+                # logger.debug(f" subfieldlen   {subfield_len} {subfield_len_d}")
+                
+                block_len_d    = extra_data[bci+2+2:bci+2+2+subfield_len]
+                block_len,     = struct.unpack("<H", block_len_d)
+                # logger.debug(f" block len   {block_len + 1:12,d}")
+
+                fp.seek(tell)
+
+                return block_len + 1
+    
+    fp.seek(tell)
+
+    return None
 
 def setLogLevel(level):
     logger.setLevel(level)
@@ -363,78 +438,6 @@ def reg2bins(rbeg, rend):
             i+=1
 
     return i; # #elements in list[]
-
-def read_gzip_header(fp):
-    #https://github.com/python/cpython/blob/3.8/Lib/gzip.py
-    
-    #http://www.htslib.org/doc/bgzip.html
-    # the gzip header includes an extra sub-field with identifier 'BC' 
-    # and the length of the compressed block, including all headers.
-    #
-    # http://samtools.github.io/hts-specs/SAMv1.pdf
-    # 1. The F.EXTRA bit in the header is set to indicate that extra fields
-    #    are present.
-    #
-    # 2. The extra field used by BGZF uses the two subfield ID values 66 and 67
-    #    (ascii ‘BC’)
-    #
-    # 3. The length of the BGZF extra field payload (field LEN in the gzip
-    #    specification) is 2 (two bytes of payload).
-    #
-    # 4. The payload of the BGZF extra field is a 16-bit unsigned integer in
-    #    little endian format. This integer gives the size of the containing
-    #    BGZF block minus one.
-
-    
-    FTEXT, FHCRC, FEXTRA, FNAME, FCOMMENT = 1, 2, 4, 8, 16
-
-    tell  = fp.tell()
-
-    magic = fp.read(2)
-    if magic == b'':
-        return False
-
-    if magic != b'\037\213':
-        raise IOError('Not a gzipped file (%r)' % magic)
-
-    (method, flag, last_mtime) = struct.unpack("<BBIxx", fp.read(8))
-
-    if method != 8:
-        raise IOError('Unknown compression method')
-
-    if flag & FEXTRA:
-        # Read & discard the extra field, if present
-        extra_len, = struct.unpack("<H", fp.read(2))
-        extra_data = fp.read(extra_len)
-        # logger.debug(f" extra length {extra_len}")
-        # logger.debug(f" extra data   {extra_data}")
-        if extra_len >= 4:
-            if b"BC" in extra_data:
-                bci            = extra_data.index(b'BC')
-                subfield_len_d = extra_data[bci+2:bci+2+2]
-                subfield_len,  = struct.unpack("<H", subfield_len_d)
-                # logger.debug(f" subfieldlen   {subfield_len} {subfield_len_d}")
-                
-                block_len_d    = extra_data[bci+2+2:bci+2+2+subfield_len]
-                block_len,     = struct.unpack("<H", block_len_d)
-                # logger.debug(f" block len   {block_len + 1:12,d}")
-
-                fp.seek(tell)
-
-                return block_len + 1
-    
-    fp.seek(tell)
-
-    return None
-
-
-# samtools format specs:
-# https://samtools.github.io/hts-specs/SAMv1.pdf
-# https://github.com/xbrianh/bgzip/blob/master/bgzip/__init__.py
-bgzip_eof = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
-
-class EOF:
-    pass
 
 def getBlock(filehandle, real_pos, block_len=None):
     filehandle.seek(real_pos, 0)
@@ -630,6 +633,15 @@ def getAllBlocks(filehandle):
         "numberRows": rows
     }
 
+def gen_all_blocks(infile):
+    logger.info(f"reading {infile}")
+
+    ingz, inid, inbj = get_filenames(infile)
+
+    inf        = open(ingz, "rb")
+    get_values = gen_value_getter(fhd)
+    data       = getAllBlocks(inf)
+
 def read_tabix(infile):
     logger.info(f"reading {infile}")
 
@@ -641,9 +653,6 @@ def read_tabix(infile):
     inf        = open(ingz, "rb")
     get_values = gen_value_getter(fhd)
     data       = {}
-
-    # getAllBlocks(inf)
-    # sys.exit(0)
 
     (magic,)   = get_values('<4s')
 
