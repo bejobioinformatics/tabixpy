@@ -3,6 +3,8 @@ import sys
 
 DEBUG = False
 
+COMPRESS = not DEBUG
+
 sys.path.insert(0, '..')
 
 import tabixpy
@@ -16,7 +18,7 @@ def runTest(testName, infile, expects):
     if not os.path.exists(tbj):
         data       = tabixpy.readTabix(ingz)
 
-        tabixpy.save(data, ingz, compress=False)
+        tabixpy.save(data, ingz, compress=COMPRESS)
 
         data2 = tabixpy.load(ingz)
 

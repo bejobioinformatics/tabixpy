@@ -1063,7 +1063,7 @@ def getAllBlocks(filehandle):
 def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
     logger.info(f" saving {filename}{ext}")
 
-    flatten     = lambda l: (item for sublist in l for item in sublist)
+    flatten     = lambda lst: (item for sublist in lst for item in sublist)
     chromLength = data["chromLength"]
     header      = {
         "chroms"     : data["chroms"],
@@ -1074,47 +1074,59 @@ def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_
     headerJ     = json.dumps(header)
 
     header_fmts = [
-        ["Q"                   , len(format_name)     ],
+        ["q"                   , len(format_name)     ],
         [f"{len(format_name)}s", format_name.encode() ],
-        ["Q"                   , format_ver           ],
-        ["Q"                   , len(headerJ)         ],
+        ["q"                   , format_ver           ],
+        ["q"                   , len(headerJ)         ],
         [f"{len(headerJ)}s"    , headerJ.encode()     ]
     ]
+    
     
     m = hashlib.sha256()
 
     header_fmt  = "<" + "".join([h[0] for h in header_fmts])
-    logger.info(f"header_fmt '{header_fmt}'")
+    logger.debug(f"header_fmt '{header_fmt}'")
     header_val  = [h[1] for h in header_fmts]
     header_dat  = struct.pack(header_fmt, *header_val )
-    logger.info(header_dat)
-    logger.info(header_val)
+    logger.debug(header_dat)
+    logger.debug(header_val)
     m.update(header_dat)
 
     if getLogLevel() == "DEBUG":
         header_rev  = struct.unpack(header_fmt, header_dat)
         header_rev  = list(header_rev)
-        logger.info(header_rev)
+        logger.debug(header_rev)
         assert header_rev == header_val
 
     opener   = open
     if compress:
-        logger.info("compressing")
+        logger.info(" compressing")
         opener = gzip.open
 
     with opener(filename + ext, 'wb') as fhd:
         fhd.write(header_dat)
 
         for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
-            logger.info(f"writing {lstK} - {chromLength}")
+            logger.info(f" writing {lstK} - {chromLength}")
             lst  = data[lstK]
-            lstD = struct.pack(f"<{chromLength}Q"     , *flatten(lst))
-            fhd.write(lstD)
-            m.update(lstD)
+            
+            for chrom_data in lst:
+                # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
+                st = chrom_data[0]
+                chrom_data = [st] + [v - chrom_data[c] for c,v in enumerate(chrom_data[1:])]
+                # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
+                lstD = struct.pack(f"<{len(chrom_data)}q"     , *chrom_data)
+                fhd.write(lstD)
+                m.update(lstD)
+                # sys.exit(0)
+
+            # lstD = struct.pack(f"<{chromLength}q"     , *flatten(lst))
+            # fhd.write(lstD)
+            # m.update(lstD)
 
         digestHex  = m.hexdigest()
         digestLen  = len(digestHex)
-        digestSize = struct.pack(f"<Q", digestLen)
+        digestSize = struct.pack(f"<q", digestLen)
         m.update(digestSize)
         fhd.write(digestSize)
         digestHex  = m.hexdigest()
@@ -1158,54 +1170,61 @@ def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, form
 
     opener   = open
     if compressed:
-        logger.info("decompressing")
+        logger.info(" decompressing")
         opener = gzip.open
 
     with opener(filename + ext, 'rb') as fhd:
         getter      = genStructValueGetter(fhd, returnBytes=True)
         
-        ((fmt_len, ), d) = getter("<Q")
+        ((fmt_len, ), d) = getter("<q")
         m.update(d)
-        logger.info(f"fmt_len    {fmt_len}")
+        logger.debug(f" fmt_len    {fmt_len}")
 
         assert fmt_len == len(format_name), f"fmt_len {fmt_len} == len(format_name) {len(format_name)}"
 
         ((fmt_nam, ), d) = getter(f"<{fmt_len}s")
         m.update(d)
         fmt_nam     = fmt_nam.decode()
-        logger.info(f"fmt_nam    {fmt_nam}")
+        logger.debug(f" fmt_nam    {fmt_nam}")
 
         assert fmt_nam == format_name, f"fmt_nam {fmt_nam} == format_name {format_name}"
 
-        ((fmt_ver, ), d) = getter("<Q")
+        ((fmt_ver, ), d) = getter("<q")
         m.update(d)
-        logger.info(f"fmt_ver    {fmt_ver}")
+        logger.debug(f" fmt_ver    {fmt_ver}")
         assert fmt_ver == format_ver, f"fmt_ver {fmt_ver} == format_ver {format_ver}"
 
-        ((lenHeaderJ, ), d) = getter("<Q")
+        ((lenHeaderJ, ), d) = getter("<q")
         m.update(d)
-        logger.info(f"lenHeaderJ {lenHeaderJ}")
+        logger.debug(f" lenHeaderJ {lenHeaderJ}")
 
         ((headerJ, ), d) = getter(f"<{lenHeaderJ}s")
         m.update(d)
         headerJ     = headerJ.decode()
         header      = json.loads(headerJ)
-        logger.info(f"header     {header}")
+        logger.debug(f" header     {header}")
 
         chromLength = header["chromLength"]
 
         for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
-            logger.info(f"reading {lstK}")
+            logger.info(f" reading {lstK}")
             header[lstK] = []
             for chromSize in header["chromSizes"]:
-                logger.info(f" reading {chromSize} values")
-                (chromData, d) = getter(f"<{chromSize}Q")
+                logger.info(f"  reading {chromSize} values")
+                (chrom_data, d) = getter(f"<{chromSize}q")
                 m.update(d)
-                header[lstK].append(chromData)
 
-        ((digestLen, ), d) = getter("<Q")
+                chrom_data = list(chrom_data)
+                # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
+                for c in range(1,len(chrom_data)):
+                    chrom_data[c] = chrom_data[c] + chrom_data[c-1]
+                # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
+
+                header[lstK].append(chrom_data)
+
+        ((digestLen, ), d) = getter("<q")
         m.update(d)
-        logger.info(f"digestLen  {digestLen}")
+        logger.debug(f"digestLen  {digestLen}")
 
         ((digestHex, ), _)  = getter(f"<{digestLen}s")
         digestHex = digestHex.decode()
@@ -1248,12 +1267,13 @@ def genAllBlocks(infile):
     lasts      = data["lastPositions"]
     rows       = data["numberRows"]
 
-    logger.info(f"chroms  {chroms}")
-    logger.info(f"numCols {numCols}")
-    logger.info(f"reals   {reals[0][:10]}-{reals[-1][-10:]}")
-    logger.info(f"firsts  {firsts[0][:10]}-{firsts[-1][-10:]}")
-    logger.info(f"lasts   {lasts[0][:10]}-{lasts[-1][-10:]}")
-    logger.info(f"rows    {rows[0][:10]}-{rows[-1][-10:]}")
+    if getLogLevel() == "DEBUG":
+        logger.debug(f"chroms  {chroms}")
+        logger.debug(f"numCols {numCols}")
+        logger.debug(f"reals   {reals[0][:10]}-{reals[-1][-10:]}")
+        logger.debug(f"firsts  {firsts[0][:10]}-{firsts[-1][-10:]}")
+        logger.debug(f"lasts   {lasts[0][:10]}-{lasts[-1][-10:]}")
+        logger.debug(f"rows    {rows[0][:10]}-{rows[-1][-10:]}")
 
     saveAllBlocks(ingz, data)
     # return data
