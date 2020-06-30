@@ -85,7 +85,7 @@ def main():
         ],
 
         [
-            "annotated_tomato_150.SL2.50ch00-01-02-03.vcf.gz",
+            "annotated_tomato_150.SL2.50ch00-01-02.vcf.gz",
             [
                 [0, 1_375_671,      None, 1_375_671, 1_395_638, 1_120],
                 [0, 1_375_672,      None, 1_375_685, 1_395_638, 1_119], #last to last bin
