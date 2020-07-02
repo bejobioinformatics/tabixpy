@@ -15,7 +15,11 @@ def runTest(testName, infile, expects):
     if DEBUG:
         tabixpy.setLogLevel(tabixpy.logging.INFO)
 
-    if not os.path.exists(tbj):
+    if os.path.exists(tbj):
+        tabixpy.logger.info(f"index file {tbj} already exists")
+        
+    else:
+        tabixpy.logger.info(f"index file {tbj} does not exists. creating")
         data       = tabixpy.readTabix(ingz)
 
         tabixpy.save(data, ingz, compress=COMPRESS)
@@ -35,7 +39,7 @@ def runTest(testName, infile, expects):
 
     if not os.path.exists(ingz):
         #TODO: implement
-        print(f"source file {ingz} does not exists")
+        tabixpy.logger.warning(f"source file {ingz} does not exists")
         return
 
     tb = tabixpy.Tabix(ingz)
@@ -125,8 +129,8 @@ def main():
     ]
     
     tests = [
-        # t1,
-        # t2,
+        t1,
+        t2,
         t3
     ]
 

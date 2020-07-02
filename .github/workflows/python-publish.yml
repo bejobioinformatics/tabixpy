@@ -28,7 +28,7 @@ jobs:
           python-version: '3.x'
       
       - name: Test
-        run: cd tests && python test.py annotated_tomato_150.100000.vcf.gz.tbi
+        run: cd tests && python test.py
 
   build:
     needs: test
