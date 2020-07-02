@@ -227,6 +227,8 @@ Schema
 
 https://jsonschema.net/home
 
+https://www.liquid-technologies.com/online-json-schema-validator
+
 https://www.jsonschemavalidator.net/
 
 
@@ -237,78 +239,182 @@ JSON
 
 ```JSON
 {
- "n_ref": 1,
- "format": 2,
- "col_seq": 1,
- "col_beg": 2,
- "col_end": 0,
- "meta": "#",
- "skip": 0,
- "l_nm": 11,
- "names": [
-  "SL2.50ch00"
- ],
- "refs": [
-  {
-   "ref_n": 0,
-   "ref_name": "SL2.50ch00",
-   "n_bin": 86,
-   "bins": [
-    {
-     "bin_n": 0,
-     "bin": 4681,
-     "n_chunk": 1,
-     "chunks": {
-      "chunk_begin": [
-       {
-        "real": 0,
-        "bytes": 29542,
-        "bin_pos": -1,
-        "first_pos": -1,
-        "last_pos": -1
-       }
-      ],
-      "chunk_end": [
-       {
-        "real": 124525,
-        "bytes": 19630,
-        "bin_pos": 16388,
-        "first_pos": 16141,
-        "last_pos": 17808
-       }
-      ]
-     }
-    }
+    "n_ref": 1,
+    "format": 2,
+    "col_seq": 1,
+    "col_beg": 2,
+    "col_end": 0,
+    "meta": "#",
+    "skip": 0,
+    "l_nm": 11,
+    "names": [
+        "SL2.50ch00"
     ],
-   "bins_begin": {
-    "real": 7021611,
-    "bytes": 4631,
-    "bin_pos": 1392700,
-    "first_pos": 1392519,
-    "last_pos": 1393971
-   },
-   "bins_end": {
-    "real": 7021611,
-    "bytes": 4631,
-    "bin_pos": 1392700,
-    "first_pos": 1392519,
-    "last_pos": 1393971
-   },
-   "n_intv": 86,
-   "intvs": [
-    {
-     "real": 7021611,
-     "bytes": 4631,
-     "bin_pos": 1392700,
-     "first_pos": 1392519,
-     "last_pos": 1393971
-    }
-   ]
-  }
- ],
- "n_no_coor": null,
- "__format_name__": "TBJ",
- "__format_ver__": 4
+    "refs": [{
+        "ref_n": 0,
+        "ref_name": "SL2.50ch00",
+        "n_bin": 86,
+        "bins": [{
+                "bin_n": 0,
+                "bin": 4681,
+                "n_chunk": 1,
+                "chunks": {
+                    "chunk_begin": [{
+                        "bin_n": 0,
+                        "chunk_n": 0,
+                        "real": 0,
+                        "bytes": 29542,
+                        "block_len": 8031,
+                        "bin_pos": 280,
+                        "first_pos": 280,
+                        "last_pos": 1506
+                    }],
+                    "chunk_end": [{
+                        "bin_n": 0,
+                        "chunk_n": 0,
+                        "real": 124525,
+                        "bytes": 19630,
+                        "block_len": 9015,
+                        "bin_pos": 16388,
+                        "first_pos": 16141,
+                        "last_pos": 17830
+                    }]
+                },
+                "chunks_begin": {
+                    "bin_n": 0,
+                    "chunk_n": 0,
+                    "real": 0,
+                    "bytes": 29542,
+                    "block_len": 8031,
+                    "bin_pos": 280,
+                    "first_pos": 280,
+                    "last_pos": 1506
+                },
+                "chunks_end": {
+                    "bin_n": 0,
+                    "chunk_n": 0,
+                    "real": 124525,
+                    "bytes": 19630,
+                    "block_len": 9015,
+                    "bin_pos": 16388,
+                    "first_pos": 16141,
+                    "last_pos": 17830
+                }
+            },
+            {
+                "bin_n": 85,
+                "bin": 4766,
+                "n_chunk": 1,
+                "chunks": {
+                    "chunk_begin": [{
+                        "bin_n": 84,
+                        "chunk_n": 0,
+                        "real": 7021611,
+                        "bytes": 4631,
+                        "block_len": 6621,
+                        "bin_pos": 1392700,
+                        "first_pos": 1392519,
+                        "last_pos": 1393974
+                    }],
+                    "chunk_end": [{
+                        "bin_n": 85,
+                        "chunk_n": 0,
+                        "real": 7039684,
+                        "bytes": 0,
+                        "block_len": -1,
+                        "bin_pos": -1,
+                        "first_pos": -1,
+                        "last_pos": -1
+                    }]
+                },
+                "chunks_begin": {
+                    "bin_n": 84,
+                    "chunk_n": 0,
+                    "real": 7021611,
+                    "bytes": 4631,
+                    "block_len": 6621,
+                    "bin_pos": 1392700,
+                    "first_pos": 1392519,
+                    "last_pos": 1393974
+                },
+                "chunks_end": {
+                    "bin_n": 85,
+                    "chunk_n": 0,
+                    "real": 7039684,
+                    "bytes": 0,
+                    "block_len": -1,
+                    "bin_pos": -1,
+                    "first_pos": -1,
+                    "last_pos": -1
+                }
+            }
+        ],
+        "bins_begin": {
+            "bin_n": 0,
+            "chunk_n": 0,
+            "real": 0,
+            "bytes": 29542,
+            "block_len": 8031,
+            "bin_pos": 280,
+            "first_pos": 280,
+            "last_pos": 1506
+        },
+        "bins_end": {
+            "bin_n": 84,
+            "chunk_n": 0,
+            "real": 7021611,
+            "bytes": 4631,
+            "block_len": 6621,
+            "bin_pos": 1392700,
+            "first_pos": 1392519,
+            "last_pos": 1393974
+        },
+        "first_block": {
+            "bin_n": 0,
+            "chunk_n": 0,
+            "real": 0,
+            "bytes": 29542,
+            "block_len": 8031,
+            "bin_pos": 280,
+            "first_pos": 280,
+            "last_pos": 1506
+        },
+        "last_block": {
+            "bin_n": -1,
+            "chunk_n": -1,
+            "real": 7035849,
+            "bytes": 0,
+            "block_len": 3835,
+            "bin_pos": -1,
+            "first_pos": 1395124,
+            "last_pos": 1395638
+        },
+        "n_intv": 86,
+        "intvs": [{
+                "bin_n": 0,
+                "chunk_n": 0,
+                "real": 0,
+                "bytes": 29542,
+                "block_len": 8031,
+                "bin_pos": 280,
+                "first_pos": 280,
+                "last_pos": 1506
+            },
+            {
+                "bin_n": 84,
+                "chunk_n": 0,
+                "real": 7021611,
+                "bytes": 4631,
+                "block_len": 6621,
+                "bin_pos": 1392700,
+                "first_pos": 1392519,
+                "last_pos": 1393974
+            }
+        ]
+    }],
+    "n_no_coor": null,
+    "__format_name__": "TBJ",
+    "__format_ver__": 5
 }
 ```
 
@@ -327,20 +433,22 @@ Timming
 File Sizes
 ----------
 
-Compressed
+*TBI* Tabix Index
+
+*TBK* Binary TabixPy 'all chunks' index 
+
+*TBJ* Compressed JSON Tabix index
+
+*TBJ.json* Uncompressed JSON Tabix Index
 
 ```
 1.1K annotated_tomato_150.100000.vcf.gz.tbi
-2.0K annotated_tomato_150.100000.vcf.gz.tbj
-727K annotated_tomato_150.vcf.bgz.tbi
-1.2M annotated_tomato_150.vcf.bgz.tbj
-```
+7.6K annotated_tomato_150.100000.vcf.gz.tbk       6.9X
+8.9K annotated_tomato_150.100000.vcf.gz.tbj       8.1X
+104K annotated_tomato_150.100000.vcf.gz.tbj.json 94.5X
 
-Uncompressed
-
-```
-1.1K annotated_tomato_150.100000.vcf.gz.tbi
- 15K annotated_tomato_150.100000.vcf.gz.tbj
-727K annotated_tomato_150.vcf.bgz.tbi
-8.4M annotated_tomato_150.vcf.bgz.tbj
+4.3K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbi
+195K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbk       45.3X
+ 39K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbj        9.1X
+468K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbj.json 108.3X
 ```

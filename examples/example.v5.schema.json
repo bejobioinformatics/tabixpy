@@ -1,0 +1,1313 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://raw.githubusercontent.com/bejobioinformatics/tabixpy/master/examples/example.v5.json",
+    "type": "object",
+    "title": "JSON Tabix",
+    "description": "JSON encoded Tabix File.",
+    "definitions": {
+        "coordinate": {
+            "$id": "#/definitions/coordinate",
+            "type": "object",
+            "title": "The first anyOf schema",
+            "description": "Coordinate information in the file.",
+            "default": {},
+            "examples": [
+                {
+                    "bin_n": 0,
+                    "chunk_n": 0,
+                    "real": 0,
+                    "bytes": 29542,
+                    "block_len": 8031,
+                    "bin_pos": 280,
+                    "first_pos": 280,
+                    "last_pos": 1506
+                }
+            ],
+            "required": [
+                "bin_n",
+                "chunk_n",
+                "real",
+                "bytes",
+                "block_len",
+                "bin_pos",
+                "first_pos",
+                "last_pos"
+            ],
+            "additionalProperties": true,
+            "properties": {
+                "bin_n": {
+                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0/properties/bin_n",
+                    "type": "integer",
+                    "title": "The bin_n schema",
+                    "description": "Bin number.",
+                    "default": 0,
+                    "examples": [
+                        0
+                    ]
+                },
+                "chunk_n": {
+                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0/properties/chunk_n",
+                    "type": "integer",
+                    "title": "The chunk_n schema",
+                    "description": "Chunk number.",
+                    "default": 0,
+                    "examples": [
+                        0
+                    ]
+                },
+                "real": {
+                    "$id": "#/definitions/coordinate/properties/real",
+                    "type": "integer",
+                    "title": "The real schema",
+                    "description": "Position in the compressed, BGZip, stream of the begning of the 64Kb block.",
+                    "default": 0,
+                    "examples": [
+                        0
+                    ]
+                },
+                "bytes": {
+                    "$id": "#/definitions/coordinate/properties/bytes",
+                    "type": "integer",
+                    "title": "The bytes schema",
+                    "description": "Position in the decompressed stream where the bin begins.",
+                    "default": 0,
+                    "examples": [
+                        29542
+                    ]
+                },
+                "block_len": {
+                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0/properties/block_len",
+                    "type": "integer",
+                    "title": "The block_len schema",
+                    "description": "Size of the compressed block.",
+                    "default": 0,
+                    "examples": [
+                        8031
+                    ]
+                },
+                "bin_pos": {
+                    "$id": "#/definitions/coordinate/properties/bin_pos",
+                    "type": "integer",
+                    "title": "The bin_pos schema",
+                    "description": "Chromosome position in which the bin starts.",
+                    "default": 0,
+                    "examples": [
+                        -1
+                    ]
+                },
+                "first_pos": {
+                    "$id": "#/definitions/coordinate/properties/first_pos",
+                    "type": "integer",
+                    "title": "The first_pos schema",
+                    "description": "Chromosome position in which the 64 Kb block starts.",
+                    "default": 0,
+                    "examples": [
+                        -1
+                    ]
+                },
+                "last_pos": {
+                    "$id": "#/definitions/coordinate/properties/last_pos",
+                    "type": "integer",
+                    "title": "The last_pos schema",
+                    "description": "Chromosome position in which the 64 Kb block ends.",
+                    "default": 0,
+                    "examples": [
+                        -1
+                    ]
+                }
+            }
+        }
+    },
+
+    "default": {},
+    "examples": [
+        {
+            "n_ref": 1,
+            "format": 2,
+            "col_seq": 1,
+            "col_beg": 2,
+            "col_end": 0,
+            "meta": "#",
+            "skip": 0,
+            "l_nm": 11,
+            "names": [
+                "SL2.50ch00"
+            ],
+            "refs": [
+                {
+                    "ref_n": 0,
+                    "ref_name": "SL2.50ch00",
+                    "n_bin": 86,
+                    "bins": [
+                        {
+                            "bin_n": 0,
+                            "bin": 4681,
+                            "n_chunk": 1,
+                            "chunks": {
+                                "chunk_begin": [
+                                    {
+                                        "bin_n": 0,
+                                        "chunk_n": 0,
+                                        "real": 0,
+                                        "bytes": 29542,
+                                        "block_len": 8031,
+                                        "bin_pos": 280,
+                                        "first_pos": 280,
+                                        "last_pos": 1506
+                                    }
+                                ],
+                                "chunk_end": [
+                                    {
+                                        "bin_n": 0,
+                                        "chunk_n": 0,
+                                        "real": 124525,
+                                        "bytes": 19630,
+                                        "block_len": 9015,
+                                        "bin_pos": 16388,
+                                        "first_pos": 16141,
+                                        "last_pos": 17830
+                                    }
+                                ]
+                            },
+                            "chunks_begin": {
+                                "bin_n": 0,
+                                "chunk_n": 0,
+                                "real": 0,
+                                "bytes": 29542,
+                                "block_len": 8031,
+                                "bin_pos": 280,
+                                "first_pos": 280,
+                                "last_pos": 1506
+                            },
+                            "chunks_end": {
+                                "bin_n": 0,
+                                "chunk_n": 0,
+                                "real": 124525,
+                                "bytes": 19630,
+                                "block_len": 9015,
+                                "bin_pos": 16388,
+                                "first_pos": 16141,
+                                "last_pos": 17830
+                            }
+                        },
+                        {
+                            "bin_n": 85,
+                            "bin": 4766,
+                            "n_chunk": 1,
+                            "chunks": {
+                                "chunk_begin": [
+                                    {
+                                        "bin_n": 84,
+                                        "chunk_n": 0,
+                                        "real": 7021611,
+                                        "bytes": 4631,
+                                        "block_len": 6621,
+                                        "bin_pos": 1392700,
+                                        "first_pos": 1392519,
+                                        "last_pos": 1393974
+                                    }
+                                ],
+                                "chunk_end": [
+                                    {
+                                        "bin_n": 85,
+                                        "chunk_n": 0,
+                                        "real": 7039684,
+                                        "bytes": 0,
+                                        "block_len": -1,
+                                        "bin_pos": -1,
+                                        "first_pos": -1,
+                                        "last_pos": -1
+                                    }
+                                ]
+                            },
+                            "chunks_begin": {
+                                "bin_n": 84,
+                                "chunk_n": 0,
+                                "real": 7021611,
+                                "bytes": 4631,
+                                "block_len": 6621,
+                                "bin_pos": 1392700,
+                                "first_pos": 1392519,
+                                "last_pos": 1393974
+                            },
+                            "chunks_end": {
+                                "bin_n": 85,
+                                "chunk_n": 0,
+                                "real": 7039684,
+                                "bytes": 0,
+                                "block_len": -1,
+                                "bin_pos": -1,
+                                "first_pos": -1,
+                                "last_pos": -1
+                            }
+                        }
+                    ],
+                    "bins_begin": {
+                        "bin_n": 0,
+                        "chunk_n": 0,
+                        "real": 0,
+                        "bytes": 29542,
+                        "block_len": 8031,
+                        "bin_pos": 280,
+                        "first_pos": 280,
+                        "last_pos": 1506
+                    },
+                    "bins_end": {
+                        "bin_n": 84,
+                        "chunk_n": 0,
+                        "real": 7021611,
+                        "bytes": 4631,
+                        "block_len": 6621,
+                        "bin_pos": 1392700,
+                        "first_pos": 1392519,
+                        "last_pos": 1393974
+                    },
+                    "first_block": {
+                        "bin_n": 0,
+                        "chunk_n": 0,
+                        "real": 0,
+                        "bytes": 29542,
+                        "block_len": 8031,
+                        "bin_pos": 280,
+                        "first_pos": 280,
+                        "last_pos": 1506
+                    },
+                    "last_block": {
+                        "bin_n": -1,
+                        "chunk_n": -1,
+                        "real": 7035849,
+                        "bytes": 0,
+                        "block_len": 3835,
+                        "bin_pos": -1,
+                        "first_pos": 1395124,
+                        "last_pos": 1395638
+                    },
+                    "n_intv": 86,
+                    "intvs": [
+                        {
+                            "bin_n": 0,
+                            "chunk_n": 0,
+                            "real": 0,
+                            "bytes": 29542,
+                            "block_len": 8031,
+                            "bin_pos": 280,
+                            "first_pos": 280,
+                            "last_pos": 1506
+                        },
+                        {
+                            "bin_n": 84,
+                            "chunk_n": 0,
+                            "real": 7021611,
+                            "bytes": 4631,
+                            "block_len": 6621,
+                            "bin_pos": 1392700,
+                            "first_pos": 1392519,
+                            "last_pos": 1393974
+                        }
+                    ]
+                }
+            ],
+            "n_no_coor": null,
+            "__format_name__": "TBJ",
+            "__format_ver__": 5
+        }
+    ],
+    "required": [
+        "n_ref",
+        "format",
+        "col_seq",
+        "col_beg",
+        "col_end",
+        "meta",
+        "skip",
+        "l_nm",
+        "names",
+        "refs",
+        "n_no_coor",
+        "__format_name__",
+        "__format_ver__"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "n_ref": {
+            "$id": "#/properties/n_ref",
+            "type": "integer",
+            "title": "The n_ref schema",
+            "description": "# sequences.",
+            "default": 1,
+            "examples": [
+                1
+            ]
+        },
+        "format": {
+            "$id": "#/properties/format",
+            "type": "integer",
+            "title": "The format schema",
+            "description": "Format (0: generic; 1: SAM; 2: VCF).",
+            "default": 2,
+            "examples": [
+                2
+            ]
+        },
+        "col_seq": {
+            "$id": "#/properties/col_seq",
+            "type": "integer",
+            "title": "The col_seq schema",
+            "description": "Column for the sequence name.",
+            "default": 1,
+            "examples": [
+                1
+            ]
+        },
+        "col_beg": {
+            "$id": "#/properties/col_beg",
+            "type": "integer",
+            "title": "The col_beg schema",
+            "description": "Column for the start of a region.",
+            "default": 2,
+            "examples": [
+                2
+            ]
+        },
+        "col_end": {
+            "$id": "#/properties/col_end",
+            "type": "integer",
+            "title": "The col_end schema",
+            "description": "Column for the end of a region.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "meta": {
+            "$id": "#/properties/meta",
+            "type": "string",
+            "title": "The meta schema",
+            "description": "Leading character for comment lines.",
+            "default": "#",
+            "examples": [
+                "#"
+            ]
+        },
+        "skip": {
+            "$id": "#/properties/skip",
+            "type": "integer",
+            "title": "The skip schema",
+            "description": "# lines to skip at the beginning.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "l_nm": {
+            "$id": "#/properties/l_nm",
+            "type": "integer",
+            "title": "The l_nm schema",
+            "description": "Length of concatenated sequence names.",
+            "default": 0,
+            "examples": [
+                11
+            ]
+        },
+        "names": {
+            "$id": "#/properties/names",
+            "type": "array",
+            "title": "The names schema",
+            "description": "Sequence names.",
+            "default": [],
+            "examples": [
+                [
+                    "SL2.50ch00"
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/names/items/anyOf/0",
+                        "type": "string",
+                        "title": "The first anyOf schema",
+                        "description": "Sequence name.",
+                        "default": "",
+                        "examples": [
+                            "SL2.50ch00"
+                        ]
+                    }
+                ],
+                "$id": "#/properties/names/items"
+            }
+        },
+        "refs": {
+            "$id": "#/properties/refs",
+            "type": "array",
+            "title": "The refs schema",
+            "description": "List of indices (n=n_ref).",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "ref_n": 0,
+                        "ref_name": "SL2.50ch00",
+                        "n_bin": 86,
+                        "bins": [
+                            {
+                                "bin_n": 0,
+                                "bin": 4681,
+                                "n_chunk": 1,
+                                "chunks": {
+                                    "chunk_begin": [
+                                        {
+                                            "bin_n": 0,
+                                            "chunk_n": 0,
+                                            "real": 0,
+                                            "bytes": 29542,
+                                            "block_len": 8031,
+                                            "bin_pos": 280,
+                                            "first_pos": 280,
+                                            "last_pos": 1506
+                                        }
+                                    ],
+                                    "chunk_end": [
+                                        {
+                                            "bin_n": 0,
+                                            "chunk_n": 0,
+                                            "real": 124525,
+                                            "bytes": 19630,
+                                            "block_len": 9015,
+                                            "bin_pos": 16388,
+                                            "first_pos": 16141,
+                                            "last_pos": 17830
+                                        }
+                                    ]
+                                },
+                                "chunks_begin": {
+                                    "bin_n": 0,
+                                    "chunk_n": 0,
+                                    "real": 0,
+                                    "bytes": 29542,
+                                    "block_len": 8031,
+                                    "bin_pos": 280,
+                                    "first_pos": 280,
+                                    "last_pos": 1506
+                                },
+                                "chunks_end": {
+                                    "bin_n": 0,
+                                    "chunk_n": 0,
+                                    "real": 124525,
+                                    "bytes": 19630,
+                                    "block_len": 9015,
+                                    "bin_pos": 16388,
+                                    "first_pos": 16141,
+                                    "last_pos": 17830
+                                }
+                            },
+                            {
+                                "bin_n": 85,
+                                "bin": 4766,
+                                "n_chunk": 1,
+                                "chunks": {
+                                    "chunk_begin": [
+                                        {
+                                            "bin_n": 84,
+                                            "chunk_n": 0,
+                                            "real": 7021611,
+                                            "bytes": 4631,
+                                            "block_len": 6621,
+                                            "bin_pos": 1392700,
+                                            "first_pos": 1392519,
+                                            "last_pos": 1393974
+                                        }
+                                    ],
+                                    "chunk_end": [
+                                        {
+                                            "bin_n": 85,
+                                            "chunk_n": 0,
+                                            "real": 7039684,
+                                            "bytes": 0,
+                                            "block_len": -1,
+                                            "bin_pos": -1,
+                                            "first_pos": -1,
+                                            "last_pos": -1
+                                        }
+                                    ]
+                                },
+                                "chunks_begin": {
+                                    "bin_n": 84,
+                                    "chunk_n": 0,
+                                    "real": 7021611,
+                                    "bytes": 4631,
+                                    "block_len": 6621,
+                                    "bin_pos": 1392700,
+                                    "first_pos": 1392519,
+                                    "last_pos": 1393974
+                                },
+                                "chunks_end": {
+                                    "bin_n": 85,
+                                    "chunk_n": 0,
+                                    "real": 7039684,
+                                    "bytes": 0,
+                                    "block_len": -1,
+                                    "bin_pos": -1,
+                                    "first_pos": -1,
+                                    "last_pos": -1
+                                }
+                            }
+                        ],
+                        "bins_begin": {
+                            "bin_n": 0,
+                            "chunk_n": 0,
+                            "real": 0,
+                            "bytes": 29542,
+                            "block_len": 8031,
+                            "bin_pos": 280,
+                            "first_pos": 280,
+                            "last_pos": 1506
+                        },
+                        "bins_end": {
+                            "bin_n": 84,
+                            "chunk_n": 0,
+                            "real": 7021611,
+                            "bytes": 4631,
+                            "block_len": 6621,
+                            "bin_pos": 1392700,
+                            "first_pos": 1392519,
+                            "last_pos": 1393974
+                        },
+                        "first_block": {
+                            "bin_n": 0,
+                            "chunk_n": 0,
+                            "real": 0,
+                            "bytes": 29542,
+                            "block_len": 8031,
+                            "bin_pos": 280,
+                            "first_pos": 280,
+                            "last_pos": 1506
+                        },
+                        "last_block": {
+                            "bin_n": -1,
+                            "chunk_n": -1,
+                            "real": 7035849,
+                            "bytes": 0,
+                            "block_len": 3835,
+                            "bin_pos": -1,
+                            "first_pos": 1395124,
+                            "last_pos": 1395638
+                        },
+                        "n_intv": 86,
+                        "intvs": [
+                            {
+                                "bin_n": 0,
+                                "chunk_n": 0,
+                                "real": 0,
+                                "bytes": 29542,
+                                "block_len": 8031,
+                                "bin_pos": 280,
+                                "first_pos": 280,
+                                "last_pos": 1506
+                            },
+                            {
+                                "bin_n": 84,
+                                "chunk_n": 0,
+                                "real": 7021611,
+                                "bytes": 4631,
+                                "block_len": 6621,
+                                "bin_pos": 1392700,
+                                "first_pos": 1392519,
+                                "last_pos": 1393974
+                            }
+                        ]
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/refs/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An Reference data.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "ref_n": 0,
+                                "ref_name": "SL2.50ch00",
+                                "n_bin": 86,
+                                "bins": [
+                                    {
+                                        "bin_n": 0,
+                                        "bin": 4681,
+                                        "n_chunk": 1,
+                                        "chunks": {
+                                            "chunk_begin": [
+                                                {
+                                                    "bin_n": 0,
+                                                    "chunk_n": 0,
+                                                    "real": 0,
+                                                    "bytes": 29542,
+                                                    "block_len": 8031,
+                                                    "bin_pos": 280,
+                                                    "first_pos": 280,
+                                                    "last_pos": 1506
+                                                }
+                                            ],
+                                            "chunk_end": [
+                                                {
+                                                    "bin_n": 0,
+                                                    "chunk_n": 0,
+                                                    "real": 124525,
+                                                    "bytes": 19630,
+                                                    "block_len": 9015,
+                                                    "bin_pos": 16388,
+                                                    "first_pos": 16141,
+                                                    "last_pos": 17830
+                                                }
+                                            ]
+                                        },
+                                        "chunks_begin": {
+                                            "bin_n": 0,
+                                            "chunk_n": 0,
+                                            "real": 0,
+                                            "bytes": 29542,
+                                            "block_len": 8031,
+                                            "bin_pos": 280,
+                                            "first_pos": 280,
+                                            "last_pos": 1506
+                                        },
+                                        "chunks_end": {
+                                            "bin_n": 0,
+                                            "chunk_n": 0,
+                                            "real": 124525,
+                                            "bytes": 19630,
+                                            "block_len": 9015,
+                                            "bin_pos": 16388,
+                                            "first_pos": 16141,
+                                            "last_pos": 17830
+                                        }
+                                    },
+                                    {
+                                        "bin_n": 85,
+                                        "bin": 4766,
+                                        "n_chunk": 1,
+                                        "chunks": {
+                                            "chunk_begin": [
+                                                {
+                                                    "bin_n": 84,
+                                                    "chunk_n": 0,
+                                                    "real": 7021611,
+                                                    "bytes": 4631,
+                                                    "block_len": 6621,
+                                                    "bin_pos": 1392700,
+                                                    "first_pos": 1392519,
+                                                    "last_pos": 1393974
+                                                }
+                                            ],
+                                            "chunk_end": [
+                                                {
+                                                    "bin_n": 85,
+                                                    "chunk_n": 0,
+                                                    "real": 7039684,
+                                                    "bytes": 0,
+                                                    "block_len": -1,
+                                                    "bin_pos": -1,
+                                                    "first_pos": -1,
+                                                    "last_pos": -1
+                                                }
+                                            ]
+                                        },
+                                        "chunks_begin": {
+                                            "bin_n": 84,
+                                            "chunk_n": 0,
+                                            "real": 7021611,
+                                            "bytes": 4631,
+                                            "block_len": 6621,
+                                            "bin_pos": 1392700,
+                                            "first_pos": 1392519,
+                                            "last_pos": 1393974
+                                        },
+                                        "chunks_end": {
+                                            "bin_n": 85,
+                                            "chunk_n": 0,
+                                            "real": 7039684,
+                                            "bytes": 0,
+                                            "block_len": -1,
+                                            "bin_pos": -1,
+                                            "first_pos": -1,
+                                            "last_pos": -1
+                                        }
+                                    }
+                                ],
+                                "bins_begin": {
+                                    "bin_n": 0,
+                                    "chunk_n": 0,
+                                    "real": 0,
+                                    "bytes": 29542,
+                                    "block_len": 8031,
+                                    "bin_pos": 280,
+                                    "first_pos": 280,
+                                    "last_pos": 1506
+                                },
+                                "bins_end": {
+                                    "bin_n": 84,
+                                    "chunk_n": 0,
+                                    "real": 7021611,
+                                    "bytes": 4631,
+                                    "block_len": 6621,
+                                    "bin_pos": 1392700,
+                                    "first_pos": 1392519,
+                                    "last_pos": 1393974
+                                },
+                                "first_block": {
+                                    "bin_n": 0,
+                                    "chunk_n": 0,
+                                    "real": 0,
+                                    "bytes": 29542,
+                                    "block_len": 8031,
+                                    "bin_pos": 280,
+                                    "first_pos": 280,
+                                    "last_pos": 1506
+                                },
+                                "last_block": {
+                                    "bin_n": -1,
+                                    "chunk_n": -1,
+                                    "real": 7035849,
+                                    "bytes": 0,
+                                    "block_len": 3835,
+                                    "bin_pos": -1,
+                                    "first_pos": 1395124,
+                                    "last_pos": 1395638
+                                },
+                                "n_intv": 86,
+                                "intvs": [
+                                    {
+                                        "bin_n": 0,
+                                        "chunk_n": 0,
+                                        "real": 0,
+                                        "bytes": 29542,
+                                        "block_len": 8031,
+                                        "bin_pos": 280,
+                                        "first_pos": 280,
+                                        "last_pos": 1506
+                                    },
+                                    {
+                                        "bin_n": 84,
+                                        "chunk_n": 0,
+                                        "real": 7021611,
+                                        "bytes": 4631,
+                                        "block_len": 6621,
+                                        "bin_pos": 1392700,
+                                        "first_pos": 1392519,
+                                        "last_pos": 1393974
+                                    }
+                                ]
+                            }
+                        ],
+                        "required": [
+                            "ref_n",
+                            "ref_name",
+                            "n_bin",
+                            "bins",
+                            "bins_begin",
+                            "bins_end",
+                            "first_block",
+                            "last_block",
+                            "n_intv",
+                            "intvs"
+                        ],
+                        "additionalProperties": true,
+                        "properties": {
+                            "ref_n": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/ref_n",
+                                "type": "integer",
+                                "title": "The ref_n schema",
+                                "description": "Sequence position.",
+                                "default": 0,
+                                "examples": [
+                                    0
+                                ]
+                            },
+                            "ref_name": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/ref_name",
+                                "type": "string",
+                                "title": "The ref_name schema",
+                                "description": "Sequence name.",
+                                "default": "",
+                                "examples": [
+                                    "SL2.50ch00"
+                                ]
+                            },
+                            "n_bin": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/n_bin",
+                                "type": "integer",
+                                "title": "The n_bin schema",
+                                "description": "# distinct bins (for the binning index).",
+                                "default": 0,
+                                "examples": [
+                                    86
+                                ]
+                            },
+                            "bins": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/bins",
+                                "type": "array",
+                                "title": "The bins schema",
+                                "description": "List of distinct bins (n=n_bin).",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "bin_n": 0,
+                                            "bin": 4681,
+                                            "n_chunk": 1,
+                                            "chunks": {
+                                                "chunk_begin": [
+                                                    {
+                                                        "bin_n": 0,
+                                                        "chunk_n": 0,
+                                                        "real": 0,
+                                                        "bytes": 29542,
+                                                        "block_len": 8031,
+                                                        "bin_pos": 280,
+                                                        "first_pos": 280,
+                                                        "last_pos": 1506
+                                                    }
+                                                ],
+                                                "chunk_end": [
+                                                    {
+                                                        "bin_n": 0,
+                                                        "chunk_n": 0,
+                                                        "real": 124525,
+                                                        "bytes": 19630,
+                                                        "block_len": 9015,
+                                                        "bin_pos": 16388,
+                                                        "first_pos": 16141,
+                                                        "last_pos": 17830
+                                                    }
+                                                ]
+                                            },
+                                            "chunks_begin": {
+                                                "bin_n": 0,
+                                                "chunk_n": 0,
+                                                "real": 0,
+                                                "bytes": 29542,
+                                                "block_len": 8031,
+                                                "bin_pos": 280,
+                                                "first_pos": 280,
+                                                "last_pos": 1506
+                                            },
+                                            "chunks_end": {
+                                                "bin_n": 0,
+                                                "chunk_n": 0,
+                                                "real": 124525,
+                                                "bytes": 19630,
+                                                "block_len": 9015,
+                                                "bin_pos": 16388,
+                                                "first_pos": 16141,
+                                                "last_pos": 17830
+                                            }
+                                        },
+                                        {
+                                            "bin_n": 85,
+                                            "bin": 4766,
+                                            "n_chunk": 1,
+                                            "chunks": {
+                                                "chunk_begin": [
+                                                    {
+                                                        "bin_n": 84,
+                                                        "chunk_n": 0,
+                                                        "real": 7021611,
+                                                        "bytes": 4631,
+                                                        "block_len": 6621,
+                                                        "bin_pos": 1392700,
+                                                        "first_pos": 1392519,
+                                                        "last_pos": 1393974
+                                                    }
+                                                ],
+                                                "chunk_end": [
+                                                    {
+                                                        "bin_n": 85,
+                                                        "chunk_n": 0,
+                                                        "real": 7039684,
+                                                        "bytes": 0,
+                                                        "block_len": -1,
+                                                        "bin_pos": -1,
+                                                        "first_pos": -1,
+                                                        "last_pos": -1
+                                                    }
+                                                ]
+                                            },
+                                            "chunks_begin": {
+                                                "bin_n": 84,
+                                                "chunk_n": 0,
+                                                "real": 7021611,
+                                                "bytes": 4631,
+                                                "block_len": 6621,
+                                                "bin_pos": 1392700,
+                                                "first_pos": 1392519,
+                                                "last_pos": 1393974
+                                            },
+                                            "chunks_end": {
+                                                "bin_n": 85,
+                                                "chunk_n": 0,
+                                                "real": 7039684,
+                                                "bytes": 0,
+                                                "block_len": -1,
+                                                "bin_pos": -1,
+                                                "first_pos": -1,
+                                                "last_pos": -1
+                                            }
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "Distinct Bin data.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "bin_n": 0,
+                                                    "bin": 4681,
+                                                    "n_chunk": 1,
+                                                    "chunks": {
+                                                        "chunk_begin": [
+                                                            {
+                                                                "bin_n": 0,
+                                                                "chunk_n": 0,
+                                                                "real": 0,
+                                                                "bytes": 29542,
+                                                                "block_len": 8031,
+                                                                "bin_pos": 280,
+                                                                "first_pos": 280,
+                                                                "last_pos": 1506
+                                                            }
+                                                        ],
+                                                        "chunk_end": [
+                                                            {
+                                                                "bin_n": 0,
+                                                                "chunk_n": 0,
+                                                                "real": 124525,
+                                                                "bytes": 19630,
+                                                                "block_len": 9015,
+                                                                "bin_pos": 16388,
+                                                                "first_pos": 16141,
+                                                                "last_pos": 17830
+                                                            }
+                                                        ]
+                                                    },
+                                                    "chunks_begin": {
+                                                        "bin_n": 0,
+                                                        "chunk_n": 0,
+                                                        "real": 0,
+                                                        "bytes": 29542,
+                                                        "block_len": 8031,
+                                                        "bin_pos": 280,
+                                                        "first_pos": 280,
+                                                        "last_pos": 1506
+                                                    },
+                                                    "chunks_end": {
+                                                        "bin_n": 0,
+                                                        "chunk_n": 0,
+                                                        "real": 124525,
+                                                        "bytes": 19630,
+                                                        "block_len": 9015,
+                                                        "bin_pos": 16388,
+                                                        "first_pos": 16141,
+                                                        "last_pos": 17830
+                                                    }
+                                                }
+                                            ],
+                                            "required": [
+                                                "bin_n",
+                                                "bin",
+                                                "n_chunk",
+                                                "chunks",
+                                                "chunks_begin",
+                                                "chunks_end"
+                                            ],
+                                            "additionalProperties": true,
+                                            "properties": {
+                                                "bin_n": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/bin_n",
+                                                    "type": "integer",
+                                                    "title": "The bin_n schema",
+                                                    "description": "Bin position.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "bin": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/bin",
+                                                    "type": "integer",
+                                                    "title": "The bin schema",
+                                                    "description": "Distinct bin number.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        4681
+                                                    ]
+                                                },
+                                                "n_chunk": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/n_chunk",
+                                                    "type": "integer",
+                                                    "title": "The n_chunk schema",
+                                                    "description": "# chunks.",
+                                                    "default": 1,
+                                                    "examples": [
+                                                        1
+                                                    ]
+                                                },
+                                                "chunks": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks",
+                                                    "type": "object",
+                                                    "title": "The chunks schema",
+                                                    "description": "List of chunks (n=n_chunk).",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "chunk_begin": [
+                                                                {
+                                                                    "bin_n": 0,
+                                                                    "chunk_n": 0,
+                                                                    "real": 0,
+                                                                    "bytes": 29542,
+                                                                    "block_len": 8031,
+                                                                    "bin_pos": 280,
+                                                                    "first_pos": 280,
+                                                                    "last_pos": 1506
+                                                                }
+                                                            ],
+                                                            "chunk_end": [
+                                                                {
+                                                                    "bin_n": 0,
+                                                                    "chunk_n": 0,
+                                                                    "real": 124525,
+                                                                    "bytes": 19630,
+                                                                    "block_len": 9015,
+                                                                    "bin_pos": 16388,
+                                                                    "first_pos": 16141,
+                                                                    "last_pos": 17830
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "chunk_begin",
+                                                        "chunk_end"
+                                                    ],
+                                                    "additionalProperties": true,
+                                                    "properties": {
+                                                        "chunk_begin": {
+                                                            "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_begin",
+                                                            "type": "array",
+                                                            "title": "The chunk_begin schema",
+                                                            "description": "Coordinates of the begining of the chunks.",
+                                                            "default": [],
+                                                            "examples": [
+                                                                [
+                                                                    {
+                                                                        "bin_n": 0,
+                                                                        "chunk_n": 0,
+                                                                        "real": 0,
+                                                                        "bytes": 29542,
+                                                                        "block_len": 8031,
+                                                                        "bin_pos": 280,
+                                                                        "first_pos": 280,
+                                                                        "last_pos": 1506
+                                                                    }
+                                                                ]
+                                                            ],
+                                                            "additionalItems": true,
+                                                            "items": {
+                                                                "anyOf": [
+                                                                    {
+                                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_begin/items/anyOf/0",
+                                                                        "type": "object",
+                                                                        "title": "The first anyOf schema",
+                                                                        "description": "Coordinates of the begining of each chunk.",
+                                                                        "$ref": "#/definitions/coordinate"
+                                                                    }
+                                                                ],
+                                                                "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_begin/items"
+                                                            }
+                                                        },
+                                                        "chunk_end": {
+                                                            "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_end",
+                                                            "type": "array",
+                                                            "title": "The chunk_end schema",
+                                                            "description": "Coordinates of the end of the chunks.",
+                                                            "default": [],
+                                                            "examples": [
+                                                                [
+                                                                    {
+                                                                        "bin_n": 0,
+                                                                        "chunk_n": 0,
+                                                                        "real": 124525,
+                                                                        "bytes": 19630,
+                                                                        "block_len": 9015,
+                                                                        "bin_pos": 16388,
+                                                                        "first_pos": 16141,
+                                                                        "last_pos": 17830
+                                                                    }
+                                                                ]
+                                                            ],
+                                                            "additionalItems": true,
+                                                            "items": {
+                                                                "anyOf": [
+                                                                    {
+                                                                        "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_end/items/anyOf/0",
+                                                                        "type": "object",
+                                                                        "title": "The first anyOf schema",
+                                                                        "description": "Coordinates of the end of each chunk.",
+                                                                        "$ref": "#/definitions/coordinate"
+                                                                    }
+                                                                ],
+                                                                "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks/properties/chunk_end/items"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "chunks_begin": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks_begin",
+                                                    "type": "object",
+                                                    "title": "The chunks_begin schema",
+                                                    "description": "Very first chunk.",
+                                                    "$ref": "#/definitions/coordinate"
+                                                    
+                                                },
+                                                "chunks_end": {
+                                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items/anyOf/0/properties/chunks_end",
+                                                    "type": "object",
+                                                    "title": "The chunks_end schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "$ref": "#/definitions/coordinate"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "$id": "#/properties/refs/items/anyOf/0/properties/bins/items"
+                                }
+                            },
+                            "bins_begin": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/bins_begin",
+                                "type": "object",
+                                "title": "The bins_begin schema",
+                                "description": "First coordinate of first bin.",
+                                "$ref": "#/definitions/coordinate"
+                            },
+                            "bins_end": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/bins_end",
+                                "type": "object",
+                                "title": "The bins_end schema",
+                                "description": "Last coordinate of last bin.",
+                                "$ref": "#/definitions/coordinate"
+                            },
+                            "first_block": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/first_block",
+                                "type": "object",
+                                "title": "The first_block schema",
+                                "description": "Coordinate of the first block.",
+                                "$ref": "#/definitions/coordinate"
+                            },
+                            "last_block": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/last_block",
+                                "type": "object",
+                                "title": "The last_block schema",
+                                "description": "Coordinate of the last block.",
+                                "$ref": "#/definitions/coordinate"
+                            },
+                            "n_intv": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/n_intv",
+                                "type": "integer",
+                                "title": "The n_intv schema",
+                                "description": "# 16kb intervals (for the linear index).",
+                                "default": 0,
+                                "examples": [
+                                    86
+                                ]
+                            },
+                            "intvs": {
+                                "$id": "#/properties/refs/items/anyOf/0/properties/intvs",
+                                "type": "array",
+                                "title": "The intvs schema",
+                                "description": "List of distinct intervals (n=n_intv).",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "bin_n": 0,
+                                            "chunk_n": 0,
+                                            "real": 0,
+                                            "bytes": 29542,
+                                            "block_len": 8031,
+                                            "bin_pos": 280,
+                                            "first_pos": 280,
+                                            "last_pos": 1506
+                                        },
+                                        {
+                                            "bin_n": 84,
+                                            "chunk_n": 0,
+                                            "real": 7021611,
+                                            "bytes": 4631,
+                                            "block_len": 6621,
+                                            "bin_pos": 1392700,
+                                            "first_pos": 1392519,
+                                            "last_pos": 1393974
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "File offset of the first record in the interval.",
+                                            "$ref": "#/definitions/coordinate"
+                                        }
+                                    ],
+                                    "$id": "#/properties/refs/items/anyOf/0/properties/intvs/items"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "$id": "#/properties/refs/items"
+            }
+        },
+        "n_no_coor": {
+            "$id": "#/properties/n_no_coor",
+            "type": "null",
+            "title": "The n_no_coor schema",
+            "description": "# unmapped reads without coordinates set.",
+            "default": null,
+            "examples": [
+                null
+            ]
+        },
+        "__format_name__": {
+            "$id": "#/properties/__format_name__",
+            "type": "string",
+            "title": "The __format_name__ schema",
+            "description": "File format name.",
+            "default": "TBJ",
+            "examples": [
+                "TBJ"
+            ]
+        },
+        "__format_ver__": {
+            "$id": "#/properties/__format_ver__",
+            "type": "integer",
+            "title": "The __format_ver__ schema",
+            "description": "File format version.",
+            "default": 4,
+            "examples": [
+                4
+            ]
+        }
+    }
+}
