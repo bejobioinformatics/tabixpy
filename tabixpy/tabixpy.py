@@ -127,6 +127,9 @@ class Tabix:
         first_block = ref["first_block"]
         last_block  = ref["last_block" ]
 
+        if "block_len" not in first_block:
+            raise NotImplementedError("block search not implemented")
+
         assert ref["ref_name"] == chrom
         assert end is None or (end <= last_block["last_pos"]), f"(end {end:12,d} <= last_block['last_pos'] {last_block['last_pos']:12,d}) - last_block {last_block}"
 
@@ -274,7 +277,6 @@ class openGzipStream():
                         yield line
                     else:
                         yield cols
-
 
     def __exit__(self, type, value, traceback):
         self._fhdz.close()
@@ -657,7 +659,7 @@ def getPosData(bin_n, chunk_n, inf, real_pos, bytes_pos, chrom):
     return chunk_nfo
 
 def readTabix(infile):
-    logger.info(f"reading {infile}")
+    logger.info(f"reading {infile}.tbi")
 
     ingz, inid, inbj = getFilenames(infile)
 
@@ -869,7 +871,14 @@ def readTabix(infile):
                 chunks_data["chunk_end"   ][chunk_n] = chunk_nfo_end
 
                 if inf is None:
-                    raise NotImplementedError("not implemented")
+                    if chunk_nfo_beg["real"] < bin_min_pos:
+                        ref["bins_begin"] = chunks_data["chunk_begin" ][chunk_n]
+                        bin_min_pos = chunk_nfo_beg["real"]
+
+                    if chunk_nfo_end["real"] > bin_max_pos:
+                        ref["bins_end"  ] = chunks_data["chunk_end"   ][chunk_n]
+                        bin_max_pos = chunk_nfo_end["real"]
+
                 else:
                     if chunk_nfo_beg["first_pos"] < bin_min_pos:
                         ref["bins_begin"] = chunks_data["chunk_begin" ][chunk_n]
@@ -902,7 +911,7 @@ def readTabix(infile):
 
         last_bin = ref["bins_end"  ]
         last_bin_pos, last_first_pos, last_last_pos, last_block_len = [last_bin.get(k, None) for k in ['bin_pos', 'first_pos', 'last_pos', 'block_len']]
-        logger.info(f"LAST 0 last_bin_pos {last_bin_pos or -1:12,d} last_first_pos {last_first_pos or -1:12,d} last_last_pos {last_last_pos or -1:12,d} last_block_len {last_block_len or -1:12,d}")
+        logger.debug(f"LAST 0 last_bin_pos {last_bin_pos or -1:12,d} last_first_pos {last_first_pos or -1:12,d} last_last_pos {last_last_pos or -1:12,d} last_block_len {last_block_len or -1:12,d}")
 
         ref["first_block"] = ref["bins_begin"]
         ref["last_block" ] = ref["bins_end"  ]
@@ -923,7 +932,7 @@ def readTabix(infile):
                 last_bin_pos, last_first_pos, last_last_pos, last_block_len = [last_nfo[k] for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
 
                 if last_block_len > 0 and last_last_pos > 0:# and chrom_name == ref["ref_name"]:
-                    logger.info(f"TAIL {e} chrom_name {chrom_name} last_bin_pos {last_bin_pos:12,d} last_first_pos {last_first_pos:12,d} last_last_pos {last_last_pos:12,d} last_block_len {last_block_len:12,d}")
+                    logger.debug(f"TAIL {e} chrom_name {chrom_name} last_bin_pos {last_bin_pos:12,d} last_first_pos {last_first_pos:12,d} last_last_pos {last_last_pos:12,d} last_block_len {last_block_len:12,d}")
                     extra_blocks.append(last_nfo)
                 lastReal += last_block_len
                 e += 1

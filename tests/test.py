@@ -3,7 +3,7 @@ import sys
 
 DEBUG = False
 
-COMPRESS = not DEBUG
+COMPRESS = True
 
 sys.path.insert(0, '..')
 
@@ -32,6 +32,11 @@ def runTest(testName, infile, expects):
 
     if DEBUG:
         tabixpy.setLogLevel(tabixpy.logging.DEBUG)
+
+    if not os.path.exists(ingz):
+        #TODO: implement
+        print(f"source file {ingz} does not exists")
+        return
 
     tb = tabixpy.Tabix(ingz)
     tb.save(overwrite=False)
