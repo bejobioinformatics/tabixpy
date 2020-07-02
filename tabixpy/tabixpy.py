@@ -606,6 +606,9 @@ def parseBlock(block, bytes_pos, chrom):
 def getPos(filehandle, real_pos, bytes_pos, chrom):
     # logger.debug(f"getPos :: real_pos {real_pos} bytes_pos {bytes_pos} chrom {chrom}")
 
+    if filehandle is None:
+        raise ValueError("Filehandle is empty")
+
     bin_pos    = -1
     first_pos  = -1
     last_pos   = -1
@@ -628,6 +631,31 @@ def getPos(filehandle, real_pos, bytes_pos, chrom):
 
     return bin_pos, first_pos, last_pos, block_len, block_size, chrom_name, num_cols, num_rows
 
+def getPosData(bin_n, chunk_n, inf, real_pos, bytes_pos, chrom):
+    if inf is not None:
+        bin_pos, first_pos, last_pos, block_len, _, _, _, _ = getPos(inf, real_pos, bytes_pos, chrom)
+
+        chunk_nfo = {
+            "bin_n": bin_n,
+            "chunk_n": chunk_n,
+            "real": real_pos,
+            "bytes": bytes_pos,
+            "block_len": block_len,
+            "bin_pos": bin_pos,
+            "first_pos": first_pos,
+            "last_pos": last_pos
+        }
+    else:
+        chunk_nfo = {
+            "bin_n": bin_n,
+            "chunk_n": chunk_n,
+            "real": real_pos,
+            "bytes": bytes_pos
+        }
+
+
+    return chunk_nfo
+
 def readTabix(infile):
     logger.info(f"reading {infile}")
 
@@ -636,7 +664,11 @@ def readTabix(infile):
     assert os.path.exists(inid), inid
 
     fhd        = gzip.open(inid, "rb")
-    inf        = open(ingz, "rb")
+
+    inf = None
+    if os.path.exists(ingz):
+        inf        = open(ingz, "rb")
+    
     get_values = genStructValueGetter(fhd)
     data       = {}
 
@@ -817,63 +849,35 @@ def readTabix(infile):
                 # last_chk_real_beg = chk_real_beg
                 # last_chk_real_end = chk_real_end
 
-                if chk_beg in position_memoize:
-                    chunk_nfo_beg     = position_memoize[chk_beg]
-                    chk_block_len_beg = chunk_nfo_beg["block_len"]
-                    chk_bin_pos_beg   = chunk_nfo_beg["bin_pos"]
-                    chk_first_pos_beg = chunk_nfo_beg["first_pos"]
-                    chk_last_pos_beg  = chunk_nfo_beg["last_pos"] 
-
-                else:
-                    chk_bin_pos_beg, chk_first_pos_beg, chk_last_pos_beg, chk_block_len_beg, _, _, _, _ = getPos(inf, chk_real_beg, chk_bytes_beg, ref['ref_name'])
-                    
-                    chunk_nfo_beg = {
-                        "bin_n": bin_n,
-                        "chunk_n": chunk_n,
-                        "real": chk_real_beg,
-                        "bytes": chk_bytes_beg,
-                        "block_len": chk_block_len_beg,
-                        "bin_pos": chk_bin_pos_beg,
-                        "first_pos": chk_first_pos_beg,
-                        "last_pos": chk_last_pos_beg,
-                    }
-                    
+                chunk_nfo_beg = position_memoize.get(chk_beg, None)
+                if chunk_nfo_beg is None:
+                    chunk_nfo_beg = getPosData(bin_n, chunk_n, inf, chk_real_beg, chk_bytes_beg, ref['ref_name'])
                     position_memoize[chk_beg] = chunk_nfo_beg
 
-                if chk_end in position_memoize:
-                    chunk_nfo_end     = position_memoize[chk_end]
-                    chk_block_len_end = chunk_nfo_end["block_len"]
-                    chk_bin_pos_end   = chunk_nfo_end["bin_pos"]
-                    chk_first_pos_end = chunk_nfo_end["first_pos"]
-                    chk_last_pos_end  = chunk_nfo_end["last_pos"] 
+                chk_bin_pos_beg, chk_first_pos_beg, chk_last_pos_beg, chk_block_len_beg = [chunk_nfo_beg.get(k, None) for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
 
-                else:
-                    chk_bin_pos_end, chk_first_pos_end, chk_last_pos_end, chk_block_len_end, _, _, _, _ = getPos(inf, chk_real_end, chk_bytes_end, ref['ref_name'])
-                
-                    chunk_nfo_end = {
-                        "bin_n": bin_n,
-                        "chunk_n": chunk_n,
-                        "real": chk_real_end,
-                        "bytes": chk_bytes_end,
-                        "block_len": chk_block_len_end,
-                        "bin_pos": chk_bin_pos_end,
-                        "first_pos": chk_first_pos_end,
-                        "last_pos": chk_last_pos_end
-                    }
 
+                chunk_nfo_end = position_memoize.get(chk_end, None)
+                if chunk_nfo_end is None:
+                    chunk_nfo_end = getPosData(bin_n, chunk_n, inf, chk_real_end, chk_bytes_end, ref['ref_name'])
                     position_memoize[chk_end] = chunk_nfo_end
 
+                chk_bin_pos_end, chk_first_pos_end, chk_last_pos_end, chk_block_len_end = [chunk_nfo_end.get(k, None) for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
+
+
                 chunks_data["chunk_begin" ][chunk_n] = chunk_nfo_beg
-                
                 chunks_data["chunk_end"   ][chunk_n] = chunk_nfo_end
 
-                if chunk_nfo_beg["first_pos"] < bin_min_pos:
-                    ref["bins_begin"] = chunks_data["chunk_begin" ][chunk_n]
-                    bin_min_pos = chunk_nfo_beg["first_pos"]
+                if inf is None:
+                    raise NotImplementedError("not implemented")
+                else:
+                    if chunk_nfo_beg["first_pos"] < bin_min_pos:
+                        ref["bins_begin"] = chunks_data["chunk_begin" ][chunk_n]
+                        bin_min_pos = chunk_nfo_beg["first_pos"]
 
-                if chunk_nfo_end["last_pos"] > bin_max_pos:
-                    ref["bins_end"  ] = chunks_data["chunk_end"   ][chunk_n]
-                    bin_max_pos = chunk_nfo_end["last_pos"]
+                    if chunk_nfo_end["last_pos"] > bin_max_pos:
+                        ref["bins_end"  ] = chunks_data["chunk_end"   ][chunk_n]
+                        bin_max_pos = chunk_nfo_end["last_pos"]
 
                 if getLogLevel() == "DEBUG":
                     logger.debug(f"======================== List of chunks (n=n_chunk[{chunk_n+1:15,d}]) ============================")
@@ -897,35 +901,35 @@ def readTabix(infile):
         # logger.debug(f'bins_end   {ref["bins_end"  ]}')
 
         last_bin = ref["bins_end"  ]
-        last_bin_pos, last_first_pos, last_last_pos, last_block_len = [last_bin[k] for k in ['bin_pos', 'first_pos', 'last_pos', 'block_len']]
-        logger.debug(f"LAST 0 last_bin_pos {last_bin_pos:12,d} last_first_pos {last_first_pos:12,d} last_last_pos {last_last_pos:12,d} last_block_len {last_block_len:12,d}")
+        last_bin_pos, last_first_pos, last_last_pos, last_block_len = [last_bin.get(k, None) for k in ['bin_pos', 'first_pos', 'last_pos', 'block_len']]
+        logger.info(f"LAST 0 last_bin_pos {last_bin_pos or -1:12,d} last_first_pos {last_first_pos or -1:12,d} last_last_pos {last_last_pos or -1:12,d} last_block_len {last_block_len or -1:12,d}")
 
         ref["first_block"] = ref["bins_begin"]
         ref["last_block" ] = ref["bins_end"  ]
 
-        lastReal     = last_bin["real"] + last_block_len
-        chrom_name   = ref["ref_name"]
-        extra_blocks = []
-        e = 0
-        while last_block_len > 0 and chrom_name == ref["ref_name"]:
-            last_bin_pos, last_first_pos, last_last_pos, last_block_len,          _, chrom_name, _, _ = getPos(inf, lastReal, 0, ref['ref_name'])
-            if last_block_len > 0 and chrom_name == ref["ref_name"]:
-                logger.debug(f"TAIL {e} chrom_name {chrom_name} last_bin_pos {last_bin_pos:12,d} last_first_pos {last_first_pos:12,d} last_last_pos {last_last_pos:12,d} last_block_len {last_block_len:12,d}")
-                extra_blocks.append({
-                    "bin_n": -1,
-                    "chunk_n": -1,
-                    "real": lastReal,
-                    "bytes": 0,
-                    "block_len": last_block_len,
-                    "bin_pos": last_bin_pos,
-                    "first_pos": last_first_pos,
-                    "last_pos": last_last_pos,
-                })
-            lastReal += last_block_len
-            e += 1
+        lastReal = None
+        if inf is not None:
+            lastReal     = last_bin["real"] + last_block_len
+        
+            chrom_name   = ref["ref_name"]
+            extra_blocks = []
+            e            = 0
 
-        if len(extra_blocks) > 0:
-            ref["last_block" ] = extra_blocks[-1]
+            while last_block_len > 0 and last_last_pos > 0 and chrom_name == ref["ref_name"]:
+                chrom_name = ref['ref_name']
+                # last_bin_pos, last_first_pos, last_last_pos, last_block_len, _, _, _, _ = getPos(inf, lastReal, 0, ref['ref_name'])
+                last_nfo       = getPosData(-1, -1, inf, lastReal, 0, ref['ref_name'])
+
+                last_bin_pos, last_first_pos, last_last_pos, last_block_len = [last_nfo[k] for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
+
+                if last_block_len > 0 and last_last_pos > 0:# and chrom_name == ref["ref_name"]:
+                    logger.info(f"TAIL {e} chrom_name {chrom_name} last_bin_pos {last_bin_pos:12,d} last_first_pos {last_first_pos:12,d} last_last_pos {last_last_pos:12,d} last_block_len {last_block_len:12,d}")
+                    extra_blocks.append(last_nfo)
+                lastReal += last_block_len
+                e += 1
+
+            if len(extra_blocks) > 0:
+                ref["last_block" ] = extra_blocks[-1]
 
         (n_intv,)  = get_values('<i')
         logger.debug(f"     n_intv              # 16kb intervals (for the linear index)         int32_t  {n_intv:15,d}")
@@ -953,22 +957,11 @@ def readTabix(infile):
             assert ioff_bytes >=          0
             assert ioff_bytes <  BLOCK_SIZE
             
-            ioff_bin_pos, ioff_first_pos, ioff_last_pos = -1, -1 ,-1
-            if ioff in position_memoize:
-                ioff_nfo = position_memoize[ioff]
-                ioff_bin_pos, ioff_first_pos, ioff_last_pos, ioff_block_len = [ioff_nfo[k] for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
-            else:
-                ioff_bin_pos, ioff_first_pos, ioff_last_pos, ioff_block_len, _, _, _, _ = getPos(inf, ioff_real, ioff_bytes, ref['ref_name'])
-                ioff_nfo = {
-                    "bin_n": -1,
-                    "chunk_n": -1,
-                    "real": ioff_real,
-                    "bytes": ioff_bytes,
-                    "block_len": ioff_block_len,
-                    "bin_pos": ioff_bin_pos,
-                    "first_pos": ioff_first_pos,
-                    "last_pos": ioff_last_pos
-                }
+            ioff_nfo = position_memoize.get(ioff, None)
+            if ioff_nfo is None:
+                ioff_nfo = getPosData(-1 ,-1, inf, ioff_real, ioff_bytes, ref['ref_name'])
+
+            ioff_bin_pos, ioff_first_pos, ioff_last_pos, ioff_block_len = [ioff_nfo.get(k, None) for  k in ["bin_pos", "first_pos", "last_pos", "block_len"]]
             
             ioffs_be[intv_n] = ioff_nfo
 
@@ -999,12 +992,23 @@ def readTabix(infile):
     data["n_no_coor"] = n_no_coor
 
     fhd.close()
-    inf.close()
+    if inf:
+        inf.close()
 
     logger.debug("finished reading")
 
     return data
 
+
+
+"""
+python
+import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
+import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
+
+import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
+import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
+"""
 
 def getAllBlocks(filehandle):
     block_len      = 0
@@ -1238,16 +1242,6 @@ def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, form
         assert len(fhd.read()) == 0
 
     return header
-
-"""
-python
-import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
-import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
-
-import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
-import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
-"""
-
 
 def genAllBlocks(infile):
     # setLogLevel(logging.DEBUG)
