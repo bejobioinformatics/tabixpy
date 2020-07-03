@@ -20,13 +20,13 @@ def runTest(testName, infile, expects):
         
     else:
         tabixpy.logger.info(f"index file {tbj} does not exists. creating")
-        data       = tabixpy.readTabix(ingz)
 
-        tabixpy.save(data, ingz, compress=COMPRESS)
+        tabix1 = tabixpy.Tabix(ingz)
+        tabix1.save(compress=COMPRESS, overwrite=True)
 
-        data2 = tabixpy.load(ingz)
+        tabix2 = tabixpy.Tabix(ingz)
 
-        assert data == data2
+        assert tabix1.data == tabix2.data
 
     # tabixpy.save(data, ingz, compress=True)
 

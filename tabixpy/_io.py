@@ -2,8 +2,16 @@ import gzip
 import json
 import struct
 
-from ._consts import COMPRESS, GZIP_MAGIC, TABIXPY_FORMAT_NAME, TABIXPY_FORMAT_VER
 from ._logger     import logger, getLogLevel
+
+from ._consts import (
+    COMPRESS,
+    GZIP_MAGIC,
+    TABIX_EXTENSION,
+    TABIXPY_FORMAT_NAME,
+    TABIXPY_FORMAT_VER,
+    TABIXPY_EXTENSION
+)
 
 def genStructValueGetter(fhd, returnBytes=False):
     def getValues(fmt):
@@ -16,7 +24,7 @@ def genStructValueGetter(fhd, returnBytes=False):
             return res
     return getValues
 
-def getFilenames(infile, old_index_ext=".tbi", new_index_ext=".tbj"):
+def getFilenames(infile, old_index_ext=TABIX_EXTENSION, new_index_ext=TABIXPY_EXTENSION):
     if infile.endswith(old_index_ext):
         ingz     = infile[:-4]
         inid     = infile
@@ -59,7 +67,7 @@ def load(ingz, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
 
     return data
 
-def save(data, ingz, compress=COMPRESS, ext=".tbj", format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
+def save(data, ingz, compress=COMPRESS, ext=TABIXPY_EXTENSION, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
     data["__format_name__"] = format_name
     data["__format_ver__" ] = format_ver
 

@@ -1,18 +1,24 @@
 import os
 import sys
+import json
+import struct
 import hashlib
 
-from .tabixpy import *
-from ._logger import logger
-from ._consts import COMPRESS
-
-ALL_BLOCKS_VER = 1
-ALL_BLOCKS_NAM = "TBK"
-ALL_BLOCKS_EXT = ".tbk"
-ALL_BLOCKS_EOF = bytes.fromhex('000102030405060708090A0B0C0D0E0F')
+from ._io     import genStructValueGetter, getFilenames
+from ._gzip   import gzip, GZIP_MAGIC
+from ._tabix  import getPos
+from ._logger import logger, getLogLevel
+from ._consts import (
+    COMPRESS,
+    VCFBGZ_FORMAT_VER,
+    VCFBGZ_FORMAT_NAME,
+    VCFBGZ_EXTENSION,
+    VCFBGZ_EOF
+)
 
 """
 python
+(cd ..; python -c 'import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")')
 import tabixpy; tabixpy.genAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
 import tabixpy; _= tabixpy.loadAllBlocks("tests/annotated_tomato_150.100000.vcf.gz")
 
@@ -74,7 +80,7 @@ def getAllBlocks(filehandle):
     
     return res
 
-def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
+def saveAllBlocks(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, format_ver=VCFBGZ_FORMAT_VER):
     logger.info(f" saving {filename}{ext}")
 
     flatten     = lambda lst: (item for sublist in lst for item in sublist)
@@ -150,18 +156,18 @@ def saveAllBlocks(filename, data, compress=COMPRESS, ext=ALL_BLOCKS_EXT, format_
         
         logger.info(digestHex)
 
-        fhd.write(ALL_BLOCKS_EOF)
+        fhd.write(VCFBGZ_EOF)
 
     return 
 
-def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, format_ver=ALL_BLOCKS_VER):
+def loadAllBlocks(filename, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, format_ver=VCFBGZ_FORMAT_VER):
     indexFile = filename + ext
     logger.info(f" loading {indexFile}")
     m = hashlib.sha256()
 
     compressed = None
     with open(indexFile, "rb") as fhd:
-        firstChars = fhd.read( 8 + len(ALL_BLOCKS_NAM) )
+        firstChars = fhd.read( 8 + len(VCFBGZ_FORMAT_NAME) )
         compressed = None
 
         if firstChars[:2] == GZIP_MAGIC:
@@ -174,7 +180,7 @@ def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, form
             except:
                 raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
             
-            if fmt == ALL_BLOCKS_NAM:
+            if fmt == VCFBGZ_FORMAT_NAME:
                 compressed = False
             else:
                 raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
@@ -245,9 +251,9 @@ def loadAllBlocks(filename, ext=ALL_BLOCKS_EXT, format_name=ALL_BLOCKS_NAM, form
         logger.info(f"digestHex  {digestHex}")
         assert digestHex == m.hexdigest()
 
-        eof = fhd.read(len(ALL_BLOCKS_EOF))
+        eof = fhd.read(len(VCFBGZ_EOF))
         
-        assert eof == ALL_BLOCKS_EOF
+        assert eof == VCFBGZ_EOF
 
         assert len(fhd.read()) == 0
 
