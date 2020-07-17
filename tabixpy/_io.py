@@ -49,7 +49,6 @@ def getByteSize(vals):
     
     raise ValueError(f"not able to encode values {vals}")
 
-
 def genStructValueGetter(fhd, returnBytes=False):
     def getValues(fmt):
         fmt_s = struct.calcsize(fmt)
@@ -168,7 +167,7 @@ def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_
         fhd.write(header_dat)
 
         for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
-            logger.info(f" writing {lstK:16s} - {chromLength:12,d}")
+            logger.info(f" writing {lstK:16s} - {chromLength:18,d}")
             lst  = data[lstK]
             
             for chrom_data in lst:
@@ -179,9 +178,10 @@ def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_
                 # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
                 
                 fmt = getByteSize(chrom_data)
-                logger.info(f"   fmt {fmt} cdsum {cdsum:15,d} min {min(chrom_data):12,d} max {max(chrom_data):12,d} <Qc{len(chrom_data)}{fmt}")
+                fms = f"<qc{len(chrom_data)}{fmt}"
+                logger.info(f"   fmt {fmt} min {min(chrom_data):15,d} max {max(chrom_data):15,d} len {len(chrom_data):18,d} cdsum {cdsum:21,d} fmts {fms}")
 
-                lstD       = struct.pack(f"<Qc{len(chrom_data)}{fmt}"  , cdsum, fmt.encode(), *chrom_data)
+                lstD       = struct.pack(fms, cdsum, fmt.encode(), *chrom_data)
                 # lstD       = struct.pack(f"<{len(chrom_data)}q"     , *chrom_data)
 
                 fhd.write(lstD)
@@ -280,7 +280,7 @@ def loadVcfGzPy(filename, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, 
             for chromSize in header["chromSizes"]:
                 logger.info(f"  {chromSize:12,d} values")
 
-                ((cdsum,), d) = getter(f"<Q")
+                ((cdsum,), d) = getter(f"<q")
                 m.update(d)
 
                 ((fmt,), d) = getter(f"<c")
@@ -296,7 +296,11 @@ def loadVcfGzPy(filename, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, 
                     chrom_data[c] = chrom_data[c] + chrom_data[c-1]
                 # logger.info(f"chrom_data {chrom_data[:10]} {chrom_data[-10:]}")
 
-                assert sum(chrom_data) == cdsum
+                if cdsum == 0: #pypy
+                    assert sum(chrom_data) == -1, f"sum(chrom_data) {sum(chrom_data)} == cdsum {cdsum}"
+
+                else:
+                    assert sum(chrom_data) == cdsum, f"sum(chrom_data) {sum(chrom_data)} == cdsum {cdsum}"
 
                 header[lstK].append(chrom_data)
 

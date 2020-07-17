@@ -7,10 +7,11 @@ from ._logger import logger, getLogLevel
 """
 python
 (cd ..; python -c 'import tabixpy; tabixpy.genVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")')
-import tabixpy; tabixpy.genVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")
+
+import tabixpy;    tabixpy.genVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")
 import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")
 
-import tabixpy; tabixpy.genVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
+import tabixpy;    tabixpy.genVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
 import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")
 """
 
@@ -31,7 +32,14 @@ def getVcfGzPy(filehandle):
         
         if block_len < 0:
             break
-        
+
+        e        += 1
+
+        if e % 1_000 == 0:
+            logger.info(f"getAllPositions :: reading block {e:12,d}")
+            # if e%500_000 == 0:
+            #     break
+
         if numCols is None:
             numCols = num_cols
 
@@ -52,7 +60,6 @@ def getVcfGzPy(filehandle):
         rows  [-1].append(num_rows)
 
         lastReal += block_len
-        e        += 1
 
     res = {
         "chroms"        : chroms,

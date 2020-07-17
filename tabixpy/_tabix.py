@@ -75,6 +75,9 @@ def parseBlock(block, bytes_pos, chrom):
             logger.debug(f"num_rows {num_rows} == 0")
         return -1, -1, -1, -1, -1, -1
 
+    if num_rows < 3:
+        return -1, -1, -1, -1, -1, -1
+
     elif num_rows == 1:
         first_row = rows[0]
         last_row  = rows[0]
