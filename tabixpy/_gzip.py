@@ -2,7 +2,14 @@ import gzip
 import struct
 
 from ._logger     import logger, getLogLevel
-from ._consts     import BLOCK_SIZE, GZIP_MAGIC, BGZIP_EOF
+from ._consts     import BLOCK_SIZE
+
+GZIP_MAGIC          = b"\x1F\x8B"
+
+# samtools format specs:
+# https://samtools.github.io/hts-specs/SAMv1.pdf
+# https://github.com/xbrianh/bgzip/blob/master/bgzip/__init__.py
+BGZIP_EOF = bytes.fromhex("1f8b08040000000000ff0600424302001b0003000000000000000000")
 
 
 class EOF:

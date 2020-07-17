@@ -442,13 +442,19 @@ File Sizes
 *TBJ.json* Uncompressed JSON Tabix Index
 
 ```
+6.8M annotated_tomato_150.100000.vcf.gz
 1.1K annotated_tomato_150.100000.vcf.gz.tbi
-7.6K annotated_tomato_150.100000.vcf.gz.tbk       6.9X
-8.9K annotated_tomato_150.100000.vcf.gz.tbj       8.1X
-104K annotated_tomato_150.100000.vcf.gz.tbj.json 94.5X
+5.9K annotated_tomato_150.100000.vcf.gz.tbk                  6.5X
+8.9K annotated_tomato_150.100000.vcf.gz.tbj                  8.1X
+104K annotated_tomato_150.100000.vcf.gz.tbj.json            94.5X
 
+ 44M annotated_tomato_150.SL2.50ch00-01-02.vcf.gz
 4.3K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbi
-195K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbk       45.3X
+ 40K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbk        9.3X
  39K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbj        9.1X
 468K annotated_tomato_150.SL2.50ch00-01-02.vcf.gz.tbj.json 108.3X
+
+5.6G annotated_tomato_150.vcf.bgz
+727K annotated_tomato_150.vcf.bgz.tbi
+
 ```

@@ -3,7 +3,7 @@ import sys
 import json
 
 from ._gzip       import openGzipStream
-from ._io         import getFilenames, load, save
+from ._io         import getFilenames, loadTabixPy, saveTabixPy
 from ._logger     import logger, setLogLevel
 from ._tabix      import readTabix
 
@@ -26,13 +26,13 @@ class Tabix:
             self._data   = readTabix(self._ingz)
 
     def load(self):
-        self._data = load(self._ingz)
+        self._data = loadTabixPy(self._ingz)
 
     def save(self, overwrite=True, compress=True):
         if os.path.exists(self._inbj):
             if not overwrite:
                 return
-        save(self._data, self._ingz, compress=compress)
+        saveTabixPy(self._data, self._ingz, compress=compress)
     
     @property
     def data(self):
@@ -106,12 +106,10 @@ class Tabix:
                 yield line
 
 
+def main(infile):
+    tabix  = Tabix(infile)
+    tabix.save(overwrite=True)
+
 if __name__ == "__main__":
-    # logging.info("__main__")
-    infile     = sys.argv[1]
-    ingz, inid = getFilenames(infile)
-    data       = readTabix(ingz, compress=True, verbosity=0)
-
-    setLogLevel(logger.debug)
-
-    save(data, ingz)
+    infile = sys.argv[1]
+    main(infile)

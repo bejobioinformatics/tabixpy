@@ -6,15 +6,12 @@ from ._gzip       import gzip, getBlock, EOF
 from ._io         import getFilenames, genStructValueGetter
 from ._logger     import logger, getLogLevel
 from ._consts     import (
-    BLOCK_SIZE,
     TABIX_EXTENSION,
-    TABIX_MAGIC
+    TABIX_MAGIC,
+    TABIX_FILE_BYTES_MASK,
+    TABIX_BLOCK_BYTES_MASK,
+    TABIX_MAX_BIN
 )
-
-FILE_BYTES_MASK   = 0xFFFFFFFFFFFFF0000
-BLOCK_BYTES_MASK  = 0x0000000000000FFFF
-MAX_BIN           = (((1<<18)-1)//7)
-
 
 def reg2bin(begPos, endPos):
     #- Given a zero-based, half-closed and half-open region [beg, end), 
@@ -31,9 +28,9 @@ def reg2bin(begPos, endPos):
 def reg2bins(rbeg, rend):
     # The list of bins that may overlap a region [beg, end) can be obtained 
     # with the following C function:
-    #define MAX_BIN (((1<<18)-1)/7)
+    #define TABIX_MAX_BIN (((1<<18)-1)/7)
     
-    res = [None] * MAX_BIN
+    res = [None] * TABIX_MAX_BIN
     
     i       = 0
     k       = 0
@@ -81,9 +78,13 @@ def parseBlock(block, bytes_pos, chrom):
     elif num_rows == 1:
         first_row = rows[0]
         last_row  = rows[0]
+        
         if getLogLevel() == "DEBUG":
             logger.debug(f"num_rows {num_rows} == 1 :: first_row {first_row[:2]} last_row {last_row[:2]}")
-    
+        
+        first_cols = first_row.split("\t")
+        last_cols  = last_row.split("\t")
+
     else:
         first_cols  = rows[ 0].split("\t")
         second_cols = rows[ 1].split("\t")
@@ -121,17 +122,35 @@ def parseBlock(block, bytes_pos, chrom):
                 #     logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} != len(first_cols) {len(first_cols):3d} or last_cols {last_cols} first_cols {first_cols}")
                 num_rows   -= 1
 
-    assert len(first_cols) >= len(last_cols), f"{len(first_cols)} == {len(last_cols)}\n{len(first_cols)} {first_cols}\n{len(last_cols)} {last_cols}"
+    if len(first_cols) < 2:
+        return -1, -1, -1, -1, -1, -1
+
+    if len(last_cols ) < 2:
+        return -1, -1, -1, -1, -1, -1
+
+    if len(first_cols) < len(last_cols):
+        return -1, -1, -1, -1, -1, -1
+
+    assert len(first_cols) >= len(last_cols), f"{len(first_cols)} >= {len(last_cols)}\n{len(first_cols)} {first_cols}\n{len(last_cols)} {last_cols}"
+    assert len(first_cols) >= 2, f"{len(first_cols)} >= 2\n{len(first_cols)} {first_cols}"
+    assert len(last_cols ) >= 2, f"{len(last_cols )} >= 2\n{len(last_cols )} {last_cols }"
 
     first_chrom = first_cols[0]
-    first_pos   = first_cols[1]
-    first_pos   = int(first_pos)
-
     last_chrom  = last_cols[0]
-    last_pos    = last_cols[1]
-    last_pos    = int(last_pos)
 
     assert chrom is None or first_chrom == last_chrom, f"first_chrom {first_chrom} == last_chrom {last_chrom}"
+
+    first_pos   = first_cols[1]
+    try:
+        first_pos   = int(first_pos)
+    except:
+        raise ValueError(f"invalid positions {first_pos} :: {first_row}")
+
+    last_pos    = last_cols[1]
+    try:
+        last_pos    = int(last_pos)
+    except:
+        raise ValueError(f"invalid positions {last_pos} :: {last_row}")
 
     bin_reg    = block[bytes_pos:].split("\n")[0]
     bin_cols   = bin_reg.split("\t")
@@ -144,8 +163,8 @@ def parseBlock(block, bytes_pos, chrom):
         try:
             bin_pos    = int(bin_pos)
         except ValueError as e:
-            logging.error(e)
-            logging.error(bin_reg)
+            logger.error(e)
+            logger.error(bin_reg)
             raise
 
         assert len(bin_cols  ) >= len(last_cols), f"{len(bin_cols  )} == {len(last_cols)}\n{len(bin_cols  )} {bin_cols}\n{len(last_cols)} {last_cols}"
@@ -345,15 +364,15 @@ def readTabix(infile):
             # the higher 48 bits, decompress the block and retrieve the byte pointed by the
             # lower 16 bits of the virtual offset.
 
-            # real_file_offsets   = [c & FILE_BYTES_MASK   for c in chunks]
+            # real_file_offsets   = [c & TABIX_FILE_BYTES_MASK   for c in chunks]
             real_file_offsets   = [c >> 16              for c in chunks]
-            block_bytes_offsets = [c & BLOCK_BYTES_MASK for c in chunks]
+            block_bytes_offsets = [c & TABIX_BLOCK_BYTES_MASK for c in chunks]
 
-            assert all([i >=     0     for i in real_file_offsets])
-            assert all([i <  2**48     for i in real_file_offsets])
+            assert all([i >=     0 for i in real_file_offsets])
+            assert all([i <  2**48 for i in real_file_offsets])
 
-            assert all([i >=          0 for i in block_bytes_offsets])
-            assert all([i <  BLOCK_SIZE for i in block_bytes_offsets])
+            assert all([i >=     0 for i in block_bytes_offsets])
+            assert all([i <  2**16 for i in block_bytes_offsets])
 
             chunks_data = {
                 "chunk_begin" : [None] * n_chunk,
@@ -372,12 +391,12 @@ def readTabix(infile):
 
                 # logger.debug(f"begin")
                 # logger.debug(f"  block             {chk_beg:064b} {chk_beg:15,d}")
-                # logger.debug(f"  mask              {BLOCK_BYTES_MASK:064b}")
+                # logger.debug(f"  mask              {TABIX_BLOCK_BYTES_MASK:064b}")
                 # logger.debug(f"  real offset       {chk_real_beg:064b} {chk_real_beg:15,d}")
                 # logger.debug(f"  block byte offset {chk_bytes_beg:064b} {chk_bytes_beg:15,d}")
                 # logger.debug(f"end")
                 # logger.debug(f"  block             {chk_end:064b} {chk_end:15,d}")
-                # logger.debug(f"  mask              {BLOCK_BYTES_MASK:064b}")
+                # logger.debug(f"  mask              {TABIX_BLOCK_BYTES_MASK:064b}")
                 # logger.debug(f"  real offset       {chk_real_end:064b} {chk_real_end:15,d}")
                 # logger.debug(f"  block byte offset {chk_bytes_end:064b} {chk_bytes_end:15,d}")
                 # logger.debug("")
@@ -505,13 +524,13 @@ def readTabix(infile):
             assert ioff <  2**63
 
             ioff_real  = ioff >> 16
-            ioff_bytes = ioff &  BLOCK_BYTES_MASK
+            ioff_bytes = ioff &  TABIX_BLOCK_BYTES_MASK
 
             assert ioff_real  >=     0
             assert ioff_real  <  2**48
 
-            assert ioff_bytes >=          0
-            assert ioff_bytes <  BLOCK_SIZE
+            assert ioff_bytes >=     0
+            assert ioff_bytes <  2**16
             
             ioff_nfo = position_memoize.get(ioff, None)
             if ioff_nfo is None:
