@@ -60,17 +60,19 @@ def genStructValueGetter(fhd, returnBytes=False):
             return res
     return getValues
 
-def getFilenames(infile, old_index_ext=TABIX_EXTENSION, new_index_ext=TABIXPY_EXTENSION):
-    if infile.endswith(old_index_ext):
-        ingz     = infile[:-4]
-        inid     = infile
-        inbj     = ingz + new_index_ext
-    else:
+def getFilenames(infile):
+    if infile[-3:] == '.gz' or infile[-4:] == '.bgz':
         ingz     = infile
-        inid     = infile + old_index_ext
-        inbj     = ingz + new_index_ext
+    else:
+        ingz     = infile[:-4]
 
-    return ingz, inid, inbj
+    inid     = infile + TABIX_EXTENSION
+    inbj     = ingz   + TABIXPY_EXTENSION
+    inbk     = ingz   + VCFBGZ_EXTENSION
+
+    assert not ingz.endswith(".")
+
+    return ingz, inid, inbj, inbk
 
 def saveTabixPy(data, ingz, compress=COMPRESS, ext=TABIXPY_EXTENSION, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
     data["__format_name__"] = format_name
@@ -89,7 +91,7 @@ def saveTabixPy(data, ingz, compress=COMPRESS, ext=TABIXPY_EXTENSION, format_nam
         json.dump(data, fhd, indent=1)
 
 def loadTabixPy(ingz, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
-    _, _, inbj = getFilenames(ingz)
+    (ingz, inid, inbj, inbk) = getFilenames(ingz)
 
     compressed = None
     with open(inbj, "rb") as fhd:

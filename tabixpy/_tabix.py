@@ -230,7 +230,7 @@ def getPosData(bin_n, chunk_n, inf, real_pos, bytes_pos, chrom):
 def readTabix(infile):
     logger.info(f"reading {infile}{TABIX_EXTENSION}")
 
-    ingz, inid, inbj = getFilenames(infile)
+    (ingz, inid, inbj, inbk) = getFilenames(infile)
 
     assert os.path.exists(inid), inid
 

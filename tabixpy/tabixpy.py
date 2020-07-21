@@ -15,7 +15,7 @@ class Tabix:
         if logLevel is not None:
             setLogLevel(logLevel)
 
-        self._ingz, self._inid, self._inbj = getFilenames(self._infile)
+        self._ingz, self._inid, self._inbj, self._inbk = getFilenames(self._infile)
 
         if os.path.exists(self._inbj):
             logger.info("reading TBJ file")
