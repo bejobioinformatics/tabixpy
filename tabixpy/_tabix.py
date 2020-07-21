@@ -54,29 +54,61 @@ def reg2bins(rbeg, rend):
     return i; # #elements in list[]
 
 def parseBlock(block, bytes_pos, chrom):
-    bin_pos   = -1
-    first_pos = -1
-    last_pos  = -1
+    bin_pos        = -1
+    first_pos      = -1
+    last_pos       = -1
+    first_chrom    = None
+    len_first_cols = -1
+    num_rows       = -1
 
     assert len(block) > 0, f"empty block '{block}'"
     assert bytes_pos  < len(block)
 
     first_row = None
     last_row  = None
-    rows      = [row for row in block.split("\n") if len(row) > 0 and row[0] != "#"]
+    rows      = [row.split("\t") for row in block.split("\n") if len(row) > 0 and row[0] != "#"]
+    num_rows  = len(rows)
+
+    if num_rows == 0:
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} == 0")
+        return -1, -1, -1, None, -1, -1
+
+    if num_rows < 3:
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} < 3")
+        return -1, -1, -1, None, -1, -1
+
+    rows       = [row for row in rows if len(row) == len(rows[1])]
+
+    if num_rows == 0:
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} == 0")
+        return -1, -1, -1, None, -1, -1
+
+    if num_rows < 3:
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} < 3")
+        return -1, -1, -1, None, -1, -1
     
+    # rows_group = list(set([row[0] for row in rows]))
+    # rows_data  = []
+    # logger.info(rows_group)
+
     if chrom is not None:
-        rows      = [row for row in rows if row.split("\t")[0] == chrom]
+        rows      = [row for row in rows if row[0] == chrom]
 
     num_rows  = len(rows)
 
     if num_rows == 0:
         if getLogLevel() == "DEBUG":
             logger.debug(f"num_rows {num_rows} == 0")
-        return -1, -1, -1, -1, -1, -1
+        return -1, -1, -1, None, -1, -1
 
     if num_rows < 3:
-        return -1, -1, -1, -1, -1, -1
+        if getLogLevel() == "DEBUG":
+            logger.debug(f"num_rows {num_rows} < 3")
+        return -1, -1, -1, None, -1, -1
 
     elif num_rows == 1:
         first_row = rows[0]
@@ -85,12 +117,12 @@ def parseBlock(block, bytes_pos, chrom):
         if getLogLevel() == "DEBUG":
             logger.debug(f"num_rows {num_rows} == 1 :: first_row {first_row[:2]} last_row {last_row[:2]}")
         
-        first_cols = first_row.split("\t")
-        last_cols  = last_row.split("\t")
+        first_cols = first_row
+        last_cols  = last_row
 
     else:
-        first_cols  = rows[ 0].split("\t")
-        second_cols = rows[ 1].split("\t")
+        first_cols  = rows[ 0]
+        second_cols = rows[ 1]
 
         if len(first_cols) != len(second_cols) or first_cols[0] != second_cols[0]:
             first_cols  = second_cols
@@ -102,7 +134,7 @@ def parseBlock(block, bytes_pos, chrom):
             if getLogLevel() == "DEBUG":
                 logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d}")
             
-            last_cols    = rows[(i*-1)-1].split("\t")
+            last_cols    = rows[(i*-1)-1]
 
             if len(last_cols) >= 2 and last_cols[0] == first_cols[0] and len(last_cols[1]) > 0:
                 try:
@@ -125,18 +157,21 @@ def parseBlock(block, bytes_pos, chrom):
                 #     logger.debug(f"i {i} (i*-1)-1 {(i*-1)-1:3d} len(rows) {len(rows):3d} num_rows {num_rows:3d}\n\tlen(last_cols) {len(last_cols):3d} != len(first_cols) {len(first_cols):3d} or last_cols {last_cols} first_cols {first_cols}")
                 num_rows   -= 1
 
-    if len(first_cols) < 2:
-        return -1, -1, -1, -1, -1, -1
+    len_first_cols = len(first_cols)
+    len_last_cols  = len(last_cols)
 
-    if len(last_cols ) < 2:
-        return -1, -1, -1, -1, -1, -1
+    if len_first_cols < 2:
+        return -1, -1, -1, None, -1, -1
 
-    if len(first_cols) < len(last_cols):
-        return -1, -1, -1, -1, -1, -1
+    if len_first_cols < 2:
+        return -1, -1, -1, None, -1, -1
 
-    assert len(first_cols) >= len(last_cols), f"{len(first_cols)} >= {len(last_cols)}\n{len(first_cols)} {first_cols}\n{len(last_cols)} {last_cols}"
-    assert len(first_cols) >= 2, f"{len(first_cols)} >= 2\n{len(first_cols)} {first_cols}"
-    assert len(last_cols ) >= 2, f"{len(last_cols )} >= 2\n{len(last_cols )} {last_cols }"
+    if len_first_cols < len_last_cols:
+        return -1, -1, -1, None, -1, -1
+
+    assert len_first_cols >= len_last_cols, f"{len_first_cols} >= {len_last_cols}\n{len_first_cols} {first_cols}\n{len_last_cols} {last_cols}"
+    assert len_first_cols >= 2            , f"{len_first_cols} >= 2\n{len_first_cols} {first_cols}"
+    assert len_last_cols  >= 2            , f"{len_last_cols } >= 2\n{len_last_cols}  {last_cols }"
 
     first_chrom = first_cols[0]
     last_chrom  = last_cols[0]
@@ -155,13 +190,14 @@ def parseBlock(block, bytes_pos, chrom):
     except:
         raise ValueError(f"invalid positions {last_pos} :: {last_row}")
 
-    bin_reg    = block[bytes_pos:].split("\n")[0]
-    bin_cols   = bin_reg.split("\t")
-    if len(bin_cols) == len(first_cols):
+    bin_reg      = block[bytes_pos:].split("\n")[0]
+    bin_cols     = bin_reg.split("\t")
+    len_bin_cols = len(bin_cols)
+    if len_bin_cols == len_first_cols:
         bin_chrom  = bin_cols[0]
         bin_pos    = bin_cols[1]
         
-        assert len(bin_cols) == len(first_cols), f"len(bin_cols) {len(bin_cols)} == len(first_cols) {len(first_cols)} :: bytes_pos {bytes_pos} chrom {chrom}\nblock[         :100] {block[:100]}\nblock[bytes_pos:   ] {block[bytes_pos:bytes_pos+100]}"
+        assert len_bin_cols == len_first_cols, f"len(bin_cols) {len_bin_cols} == len(first_cols) {len_first_cols} :: bytes_pos {bytes_pos} chrom {chrom}\nblock[         :100] {block[:100]}\nblock[bytes_pos:   ] {block[bytes_pos:bytes_pos+100]}"
 
         try:
             bin_pos    = int(bin_pos)
@@ -170,9 +206,9 @@ def parseBlock(block, bytes_pos, chrom):
             logger.error(bin_reg)
             raise
 
-        assert len(bin_cols  ) >= len(last_cols), f"{len(bin_cols  )} == {len(last_cols)}\n{len(bin_cols  )} {bin_cols}\n{len(last_cols)} {last_cols}"
-            
-    return bin_pos, first_pos, last_pos, first_chrom, len(first_cols), num_rows
+        assert len_bin_cols >= len_last_cols, f"{len_bin_cols} == {len_last_cols}\n{len_bin_cols} {bin_cols}\n{len_last_cols} {last_cols}"
+
+    return bin_pos, first_pos, last_pos, first_chrom, len_first_cols, num_rows
 
 def getPos(filehandle, real_pos, bytes_pos, chrom):
     # logger.debug(f"getPos :: real_pos {real_pos} bytes_pos {bytes_pos} chrom {chrom}")

@@ -1,49 +1,57 @@
 import os
 import sys
 
-DEBUG = False
-
-COMPRESS = True
+DEBUG     = False
+COMPRESS  = True
+OVERWRITE = True
 
 sys.path.insert(0, '..')
 
 import tabixpy
 
-def runTest(testName, infile, expects):
-    ingz, tbi, tbj, tbk = tabixpy.getFilenames(infile)
+def runTest(testName, infile, expects, indexType):
+    tb         = tabixpy.Tabix(infile, indexType=indexType)
+
+    gzfile     = tb.bgz
+    indexFile  = tb.indexFile
+    sourceFile = tb.sourceFile
 
     if DEBUG:
         tabixpy.setLogLevel(tabixpy.logging.INFO)
 
-    if os.path.exists(tbj):
-        tabixpy.logger.info(f"index file {tbj} already exists")
+    if os.path.exists(indexFile):
+        tabixpy.logger.info(f"index file {indexFile} already exists")
         
     else:
-        tabixpy.logger.info(f"index file {tbj} does not exists. creating")
+        tabixpy.logger.info(f"index file {indexFile} does not exists. creating")
 
-        tabix1 = tabixpy.Tabix(ingz)
-        tabix1.save(compress=COMPRESS, overwrite=True)
+        tabix1 = tabixpy.Tabix(gzfile, indexType=indexType)
+        tabix1.load()
+        # tabix1.save(compress=COMPRESS, overwrite=OVERWRITE)
 
-        tabix2 = tabixpy.Tabix(ingz)
+        tabixpy.logger.info(f"index file {indexFile} does not exists. reloading")
+
+        tabix2 = tabixpy.Tabix(gzfile, indexType=indexType)
+        tabix2.load()
 
         assert tabix1.data == tabix2.data
 
-    # tabixpy.save(data, ingz, compress=True)
+        del tabix1
+        del tabix2
 
-    # data2 = tabixpy.load(ingz)
-
-    # assert data == data2
+        tabixpy.logger.info(f"index file {indexFile} does not exists. removing")
 
     if DEBUG:
         tabixpy.setLogLevel(tabixpy.logging.DEBUG)
 
-    if not os.path.exists(ingz):
+    if not os.path.exists(gzfile):
         #TODO: implement
-        tabixpy.logger.warning(f"source file {ingz} does not exists")
+        tabixpy.logger.warning(f"source file {gzfile} does not exists")
         return
 
-    tb = tabixpy.Tabix(ingz)
-    tb.save(overwrite=False)
+    tabixpy.logger.info(f"loading index file {indexFile}")
+    tb.load()
+
     tabixpy.logger.debug(tb.chromosomes)
 
     for test_num, (chrom_idx, begin, end, minPos, maxPos, count) in enumerate(expects):
@@ -58,23 +66,25 @@ def runTest(testName, infile, expects):
             assert int(vals[-1][1]) == maxPos, f"{vals[-1][1]} == {maxPos}"
             if len(vals) > 10:
                 for row_num, row in enumerate(vals[:5]):
-                    tabixpy.logger.info(f"{row_num+1} {row[:2]}")
+                    tabixpy.logger.info(f"{row_num+1:6d} {row[:2]}")
                 for row_num, row in enumerate(vals[-5:]):
-                    tabixpy.logger.info(f"{row_num+1+len(vals)-5} {row[:2]}")
+                    tabixpy.logger.info(f"{row_num+1+len(vals)-5:6d} {row[:2]}")
             else:
                 for row_num, row in enumerate(vals):
-                    tabixpy.logger.info(f"{row_num+1} {row[:2]}")
+                    tabixpy.logger.info(f"{row_num+1:6d} {row[:2]}")
 
         assert len(vals) == count, f"{len(vals)} == {count}"
 
-def runTests(tests):
-    for testNum, (infile, expects) in enumerate(tests):
-        runTest(testNum, infile, expects)
+def runTests(tests, indexTypes):
+    for indexType in indexTypes:
+        for testNum, (testname, infile, expects) in enumerate(tests):
+            runTest(testname, infile, expects, indexType)
 
 def main():
     # tabixpy.setLogLevel(tabixpy.logging.DEBUG)
     
     t1 = [
+        "150.100000",
         "annotated_tomato_150.100000.vcf.gz.tbi",
         # return
         # 1_375_671 - 1_378_902 [-2]
@@ -95,6 +105,7 @@ def main():
     ]
 
     t2 = [
+        "150.SL2.50ch00-01-02",
         "annotated_tomato_150.SL2.50ch00-01-02.vcf.gz",
         [
             [0, 1_375_671,      None, 1_375_671,  1_395_638, 1_120],
@@ -112,6 +123,7 @@ def main():
     ]
 
     t3 = [
+        "150",
         "annotated_tomato_150.vcf.bgz.tbi",
         [
             [0,  1_375_671,      None,  1_375_671, 21_805_702, 1_107_062],
@@ -128,14 +140,27 @@ def main():
         ]
     ]
     
-    tests = [
+    # runTests([
+    #     t1,
+    #     t2,
+    #     t3
+    # ], [tabixpy.Tabix.TBJ, tabixpy.Tabix.TBK])
+
+    # runTests([
+    #     t1,
+    #     t2,
+    #     t3
+    # ], [tabixpy.Tabix.TBJ])
+
+    # runTests([
+    #     t1,
+    #     t2,
+    # ], [tabixpy.Tabix.TBK])
+
+    runTests([
         t1,
         t2,
-        t3
-    ]
-
-
-    runTests(tests)
+    ], [tabixpy.Tabix.TBJ, tabixpy.Tabix.TBK])
 
 
 

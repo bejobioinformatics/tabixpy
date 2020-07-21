@@ -14,14 +14,14 @@ PROG=python3
 
 ${PROG} test.py 2>&1 > test.log
 
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")') | tee test.log
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")') | tee test.log
+#(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz", save=True)') | tee test.log
+#(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.100000.vcf.gz")') | tee test.log
 
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")') | tee test.log
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")') | tee test.log
+#(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz", save=True)') | tee test.log
+#(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.SL2.50ch00-01-02.vcf.gz")') | tee test.log
 
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.vcf.bgz")') | tee test.log
-(cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.vcf.bgz")') | tee test.log
+# (cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.genVcfGzPy("tests/annotated_tomato_150.vcf.bgz", save=True)') | tee test.log
+# (cd ..; time ${PROG} -c 'import tabixpy; _= tabixpy.loadVcfGzPy("tests/annotated_tomato_150.vcf.bgz")') | tee test.log
 
 
 # f=annotated_tomato_150.100000.vcf.gz.tbj

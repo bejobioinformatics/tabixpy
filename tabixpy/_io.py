@@ -74,11 +74,11 @@ def getFilenames(infile):
 
     return ingz, inid, inbj, inbk
 
-def saveTabixPy(data, ingz, compress=COMPRESS, ext=TABIXPY_EXTENSION, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
-    data["__format_name__"] = format_name
-    data["__format_ver__" ] = format_ver
+def saveTabixPy(ingz, data, compress=COMPRESS):
+    data["__format_name__"] = TABIXPY_FORMAT_NAME
+    data["__format_ver__" ] = TABIXPY_FORMAT_VER
 
-    outfileJ = ingz + ext
+    outfileJ = ingz + TABIXPY_EXTENSION
 
     logger.info(f"saving  {outfileJ}")
 
@@ -90,7 +90,7 @@ def saveTabixPy(data, ingz, compress=COMPRESS, ext=TABIXPY_EXTENSION, format_nam
     with opener(outfileJ, "wt") as fhd:
         json.dump(data, fhd, indent=1)
 
-def loadTabixPy(ingz, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT_VER):
+def loadTabixPy(ingz):
     (ingz, inid, inbj, inbk) = getFilenames(ingz)
 
     compressed = None
@@ -116,13 +116,15 @@ def loadTabixPy(ingz, format_name=TABIXPY_FORMAT_NAME, format_ver=TABIXPY_FORMAT
     assert "__format_name__" in data
     assert "__format_ver__"  in data
 
-    assert data["__format_name__"] == format_name
-    assert data["__format_ver__" ] == format_ver
+    assert data["__format_name__"] == TABIXPY_FORMAT_NAME
+    assert data["__format_ver__" ] == TABIXPY_FORMAT_VER
 
     return data
 
-def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, format_ver=VCFBGZ_FORMAT_VER):
-    logger.info(f" saving {filename}{ext}")
+def saveVcfGzPy(filename, data, compress=COMPRESS):
+    outfile = filename + VCFBGZ_EXTENSION
+
+    logger.info(f" saving {outfile}")
 
     flatten     = lambda lst: (item for sublist in lst for item in sublist)
     chromLength = data["chromLength"]
@@ -136,11 +138,11 @@ def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_
     headerJ     = json.dumps(header)
 
     header_fmts = [
-        ["q"                   , len(format_name)     ],
-        [f"{len(format_name)}s", format_name.encode() ],
-        ["q"                   , format_ver           ],
-        ["q"                   , len(headerJ)         ],
-        [f"{len(headerJ)}s"    , headerJ.encode()     ]
+        ["q"                          , len(VCFBGZ_FORMAT_NAME)     ],
+        [f"{len(VCFBGZ_FORMAT_NAME)}s", VCFBGZ_FORMAT_NAME.encode() ],
+        ["q"                          , VCFBGZ_FORMAT_VER           ],
+        ["q"                          , len(headerJ)                ],
+        [f"{len(headerJ)}s"           , headerJ.encode()            ]
     ]
     
     
@@ -165,7 +167,7 @@ def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_
         logger.info(" compressing")
         opener = gzip.open
 
-    with opener(filename + ext, 'wb') as fhd:
+    with opener(outfile, 'wb') as fhd:
         fhd.write(header_dat)
 
         for lstK in ["realPositions", "firstPositions", "lastPositions", "numberRows"]:
@@ -210,9 +212,10 @@ def saveVcfGzPy(filename, data, compress=COMPRESS, ext=VCFBGZ_EXTENSION, format_
 
     return 
 
-def loadVcfGzPy(filename, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, format_ver=VCFBGZ_FORMAT_VER):
-    indexFile = filename + ext
+def loadVcfGzPy(filename):
+    indexFile = filename + VCFBGZ_EXTENSION
     logger.info(f" loading {indexFile}")
+
     m = hashlib.sha256()
 
     compressed = None
@@ -228,41 +231,41 @@ def loadVcfGzPy(filename, ext=VCFBGZ_EXTENSION, format_name=VCFBGZ_FORMAT_NAME, 
             try:
                 fmt = fmt.decode()
             except:
-                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {VCFBGZ_FORMAT_NAME}")
             
             if fmt == VCFBGZ_FORMAT_NAME:
                 compressed = False
             else:
-                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+                raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {VCFBGZ_FORMAT_NAME}")
 
         if compressed is None:
-            raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {format_name}")
+            raise ValueError(f"not a valid uncompressed file. invalid magic header: {fmt}. expected {GZIP_MAGIC} OR {VCFBGZ_FORMAT_NAME}")
 
     opener   = open
     if compressed:
         logger.info(" decompressing")
         opener = gzip.open
 
-    with opener(filename + ext, 'rb') as fhd:
+    with opener(indexFile, 'rb') as fhd:
         getter      = genStructValueGetter(fhd, returnBytes=True)
         
         ((fmt_len, ), d) = getter("<q")
         m.update(d)
         logger.debug(f" fmt_len    {fmt_len}")
 
-        assert fmt_len == len(format_name), f"fmt_len {fmt_len} == len(format_name) {len(format_name)}"
+        assert fmt_len == len(VCFBGZ_FORMAT_NAME), f"fmt_len {fmt_len} == len(VCFBGZ_FORMAT_NAME) {len(VCFBGZ_FORMAT_NAME)}"
 
         ((fmt_nam, ), d) = getter(f"<{fmt_len}s")
         m.update(d)
         fmt_nam     = fmt_nam.decode()
         logger.debug(f" fmt_nam    {fmt_nam}")
 
-        assert fmt_nam == format_name, f"fmt_nam {fmt_nam} == format_name {format_name}"
+        assert fmt_nam == VCFBGZ_FORMAT_NAME, f"fmt_nam {fmt_nam} == VCFBGZ_FORMAT_NAME {VCFBGZ_FORMAT_NAME}"
 
         ((fmt_ver, ), d) = getter("<q")
         m.update(d)
         logger.debug(f" fmt_ver    {fmt_ver}")
-        assert fmt_ver == format_ver, f"fmt_ver {fmt_ver} == format_ver {format_ver}"
+        assert fmt_ver == VCFBGZ_FORMAT_VER, f"fmt_ver {fmt_ver} == VCFBGZ_FORMAT_VER {VCFBGZ_FORMAT_VER}"
 
         ((lenHeaderJ, ), d) = getter("<q")
         m.update(d)
