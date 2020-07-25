@@ -28,7 +28,7 @@ jobs:
           python-version: '3.x'
       
       - name: Test
-        run: cd tests && python test.py
+        run: cd tabixpy/tests && python test.py
 
   build:
     needs: test
@@ -53,8 +53,17 @@ jobs:
       - name: Build Release
         run: python setup.py sdist bdist_wheel
       
+      - name: test release
+        run: twine check dist/tabixpy-*
+      
       - name: Copy version
-        run: cp VERSION dist/VERSION
+        run: cp tabixpy/VERSION dist/VERSION
+
+      - name: Copy readme
+        run: cp tabixpy/README.md dist/README.md
+
+      - name: Copy license
+        run: cp tabixpy/LICENSE.txt dist/LICENSE.txt
       
       - name: upload build
         uses: actions/upload-artifact@v2
@@ -80,7 +89,7 @@ jobs:
         id: vars
         run: |
           export TAG=$(echo $GITHUB_REF | cut -d / -f 3)
-          export VERSION=$(cat VERSION)
+          export VERSION=$(cat tabixpy/VERSION)
           echo ::set-output name=TAG::$(echo $TAG)
           echo ::set-output name=VERSION::$(echo $VERSION)
           echo ::set-output name=WHEEL::$(echo tabixpy-$VERSION-py3-none-any.whl)

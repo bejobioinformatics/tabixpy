@@ -1,0 +1,3 @@
+recursive-include tabixpy README.md LICENSE.txt VERSION
+recursive-include tabixpy/tests *.sh *.py *.gz *.tbi *.md
+graft examples

@@ -4,12 +4,11 @@
 
 set -xeu
 
-rm -rfv build/ dist/ tabixpy.egg-info/ || true
+rm -rfv build/ dist/ tabixpy.egg-info/ tabixpy-* || true
 
-python3 -m pip install --user --upgrade setuptools wheel
-python3 -m pip install --user --upgrade twine
+#python3 -m pip install --user --upgrade setuptools wheel
+#python3 -m pip install --user --upgrade twine
 
 python3 setup.py sdist bdist_wheel
 
-# python3 -m twine upload --repository pypi dist/*
-python3 -m twine upload --repository tabixpy dist/*
+twine check dist/tabixpy-*-py3-none-any.whl

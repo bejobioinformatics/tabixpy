@@ -5,7 +5,7 @@ DEBUG     = False
 COMPRESS  = True
 OVERWRITE = True
 
-sys.path.insert(0, '..')
+sys.path.insert(0, '../..')
 
 import tabixpy
 
@@ -77,8 +77,9 @@ def runTest(testName, infile, expects, indexType):
 
 def runTests(tests, indexTypes):
     for indexType in indexTypes:
-        for testNum, (testname, infile, expects) in enumerate(tests):
-            runTest(testname, infile, expects, indexType)
+        for testname, infile, expects in tests:
+            if os.path.exists(infile):
+                runTest(testname, infile, expects, indexType)
 
 def main():
     # tabixpy.setLogLevel(tabixpy.logging.DEBUG)
@@ -144,23 +145,23 @@ def main():
     #     t1,
     #     t2,
     #     t3
-    # ], [tabixpy.Tabix.TBJ, tabixpy.Tabix.TBK])
+    # ], [tabixpy.Formats.TBJ, tabixpy.Formats.TBK])
 
     # runTests([
     #     t1,
     #     t2,
     #     t3
-    # ], [tabixpy.Tabix.TBJ])
+    # ], [tabixpy.Formats.TBJ])
 
     # runTests([
     #     t1,
     #     t2,
-    # ], [tabixpy.Tabix.TBK])
+    # ], [tabixpy.Formats.TBK])
 
     runTests([
         t1,
         t2,
-    ], [tabixpy.Tabix.TBJ, tabixpy.Tabix.TBK])
+    ], [tabixpy.Formats.TBJ, tabixpy.Formats.TBK])
 
 
 

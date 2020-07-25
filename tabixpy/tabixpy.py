@@ -11,16 +11,19 @@ from ._logger     import logger, setLogLevel, getLogLevel
 from ._tabix      import readTabix
 from ._vcfbgzpy   import readBGZ
 
-class TabixVars:
-    TBJ       = 1
-    TBK       = 2
-    DEFAULT   = TBK
+from enum import Enum, auto
+class Formats(Enum):
+    TBJ       = auto()
+    TBK       = auto()
+    DEFAULT   = TBJ
+
+class TabixDefaults():
     OVERWRITE = True
     COMPRESS  = True
     CINE      = True
 
-class Tabix(TabixVars):
-    def __init__(self, ingz, indexType=TabixVars.DEFAULT, logLevel=None):
+class Tabix(TabixDefaults):
+    def __init__(self, ingz, indexType=Formats.DEFAULT, logLevel=None):
         self._infile    = ingz
         self._indexType = indexType
         self._numCols   = None
@@ -32,40 +35,40 @@ class Tabix(TabixVars):
 
         self._inbgz, self._intbi, self._intbj, self._intbk = getFilenames(self._infile)
 
-    def create(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
-        if   self._indexType == self.TBJ:
+    def create(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
+        if   self._indexType == Formats.TBJ:
             self.createTBJ(overwrite=overwrite, compress=compress)
-        elif self._indexType == self.TBK:
+        elif self._indexType == Formats.TBK:
             self.createTBK(overwrite=overwrite, compress=compress)
         else:
             raise ValueError(f"NO SUCH INDEX TYPE {self._indexType}. Valid values are TBJ and TBK")
 
-    def createTBJ(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
+    def createTBJ(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
         logger.info(f"creating TBJ")
-        if self._data is None or self._type != self.TBJ:
+        if self._data is None or self._type != Formats.TBJ:
             self.loadTBI()
         self.saveTBJ(overwrite=overwrite, compress=compress)
 
-    def createTBK(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
+    def createTBK(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
         logger.info(f"creating TBK")
-        if self._data is None or self._type != self.TBK:
+        if self._data is None or self._type != Formats.TBK:
             self.loadBGZ()
         self.saveTBK(overwrite=overwrite, compress=compress)
 
-    def save(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
-        if   self._type == self.TBJ:
+    def save(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
+        if   self._type == Formats.TBJ:
             self.saveTBJ(overwrite=overwrite, compress=compress)
 
-        elif self._type == self.TBK:
+        elif self._type == Formats.TBK:
             self.saveTBK(overwrite=overwrite, compress=compress)
 
         else:
             raise ValueError(f"NO SUCH INDEX TYPE {self._type}. Valid values are DEFAULT (TBK), TBJ and TBK")
 
-    def saveTBJ(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
+    def saveTBJ(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
         logger.info(f"saving TBJ")
 
-        if self._type != self.TBJ:
+        if self._type != Formats.TBJ:
             raise ValueError("Saving TBJ when data is in different format")
 
         if os.path.exists(self._intbj):
@@ -74,10 +77,10 @@ class Tabix(TabixVars):
 
         saveTabixPy(self._inbgz, self._data, compress=compress)
 
-    def saveTBK(self, overwrite=TabixVars.OVERWRITE, compress=TabixVars.COMPRESS):
+    def saveTBK(self, overwrite=TabixDefaults.OVERWRITE, compress=TabixDefaults.COMPRESS):
         logger.info(f"saving TBK")
 
-        if self._type != self.TBK:
+        if self._type != Formats.TBK:
             raise ValueError("Saving TBK when data is in different format")
 
         if os.path.exists(self._intbk):
@@ -86,15 +89,15 @@ class Tabix(TabixVars):
 
         saveVcfGzPy(self._inbgz, self._data)
 
-    def load(self, create_if_not_exists=TabixVars.CINE):
-        if self._indexType == self.TBK:
+    def load(self, create_if_not_exists=TabixDefaults.CINE):
+        if self._indexType == Formats.TBK:
             if   os.path.exists(self._intbk) or create_if_not_exists:
                 logger.info(f"reading TBK index {self._intbk}")
                 self.loadTBK(create_if_not_exists=create_if_not_exists)
             else:
                 raise IOError(f"no such index {self._intbk} OR FILE {self._inbgz}")
 
-        elif self._indexType == self.TBJ:
+        elif self._indexType == Formats.TBJ:
             if   os.path.exists(self._intbj) or create_if_not_exists:
                 logger.info(f"reading TBJ index {self._intbj}")
                 self.loadTBJ(create_if_not_exists=create_if_not_exists)
@@ -104,25 +107,25 @@ class Tabix(TabixVars):
         else:
             raise ValueError(f"NO SUCH INDEX TYPE {self._type}. Valid values are DEFAULT (TBK), TBJ and TBK")
 
-    def loadBGZ(self, create_if_not_exists=TabixVars.CINE):
+    def loadBGZ(self, create_if_not_exists=TabixDefaults.CINE):
         if not os.path.exists(self._inbgz):
             raise IOError(f"BGZ file {self._inbgz} does not exists")
 
         logger.info(f"loading BGZ")
 
         self._data = readBGZ(self._inbgz)
-        self._type = self.TBK
+        self._type = Formats.TBK
 
-    def loadTBI(self, create_if_not_exists=TabixVars.CINE):
+    def loadTBI(self, create_if_not_exists=TabixDefaults.CINE):
         if not os.path.exists(self._intbi):
             raise IOError(f"TBI file {self._intbi} does not exists")
 
         logger.info(f"loading TBI")
 
         self._data  = readTabix(self._inbgz)
-        self._type = self.TBJ
+        self._type = Formats.TBJ
 
-    def loadTBJ(self, create_if_not_exists=TabixVars.CINE):
+    def loadTBJ(self, create_if_not_exists=TabixDefaults.CINE):
         if not os.path.exists(self._intbj):
             if not create_if_not_exists:
                 raise IOError(f"TBJ file {self._intbj} does not exists")
@@ -133,9 +136,9 @@ class Tabix(TabixVars):
         logger.info(f"loading TBJ")
 
         self._data = loadTabixPy(self._inbgz)
-        self._type = self.TBJ
+        self._type = Formats.TBJ
 
-    def loadTBK(self, create_if_not_exists=TabixVars.CINE):
+    def loadTBK(self, create_if_not_exists=TabixDefaults.CINE):
         if not os.path.exists(self._intbk):
             if not create_if_not_exists:
                 raise IOError(f"TBK file {self._intbk} does not exists")
@@ -146,7 +149,7 @@ class Tabix(TabixVars):
         logger.info(f"loading TBK")
 
         self._data = loadVcfGzPy(self._inbgz)
-        self._type = self.TBK
+        self._type = Formats.TBK
     
     @property
     def bgz(self):
@@ -154,18 +157,18 @@ class Tabix(TabixVars):
 
     @property
     def indexFile(self):
-        if self._indexType == self.TBJ:
+        if self._indexType == Formats.TBJ:
             return self._intbj
 
-        if self._indexType == self.TBK:
+        if self._indexType == Formats.TBK:
             return self._intbk
 
     @property
     def sourceFile(self):
-        if self._indexType == self.TBJ:
+        if self._indexType == Formats.TBJ:
             return self._intbi
 
-        if self._indexType == self.TBK:
+        if self._indexType == Formats.TBK:
             return self._inbgz
 
     @property
@@ -174,10 +177,10 @@ class Tabix(TabixVars):
 
     @property
     def chromosomes(self):
-        if self._indexType == self.TBJ:
+        if self._indexType == Formats.TBJ:
             return self._data["names"]
 
-        if self._indexType == self.TBK:
+        if self._indexType == Formats.TBK:
             return self._data["chroms"]
 
     @property
@@ -190,10 +193,10 @@ class Tabix(TabixVars):
         assert  end   is None or end   >= 0
         assert (begin is None or end is None) or begin <= end
 
-        if self._indexType == self.TBJ:
+        if self._indexType == Formats.TBJ:
             return self.getChromosomeIterTBJ(chrom, begin=begin, end=end, asLine=asLine)
 
-        if self._indexType == self.TBK:
+        if self._indexType == Formats.TBK:
             return self.getChromosomeIterTBK(chrom, begin=begin, end=end, asLine=asLine)
 
     def getChromosomeIterTBJ(self, chrom, begin=None, end=None, asLine=False):
@@ -315,12 +318,3 @@ class Tabix(TabixVars):
         with openGzipStream(self._inbgz, real, 0, asLine=asLine, chrom=chrom, begin=begin, end=end) as fhd:
             for line in fhd:
                 yield line
-
-
-def main(infile):
-    tabix  = Tabix(infile)
-    tabix.save(overwrite=TabixVars.OVERWRITE)
-
-if __name__ == "__main__":
-    infile = sys.argv[1]
-    main(infile)

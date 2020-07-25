@@ -325,4 +325,3 @@ def loadVcfGzPy(filename):
         assert len(fhd.read()) == 0
 
     return header
-
