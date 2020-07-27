@@ -1,3 +1,8 @@
 recursive-include tabixpy README.md LICENSE.txt VERSION
+
+#graft tabixpy/tests
+#recursive-exclude  tabixpy/tests *.gz *.tbi *.tbj *.tbk *.vcf *.bgz *.log *.json
+
 recursive-include tabixpy/tests *.sh *.py *.gz *.tbi *.md
+
 graft examples

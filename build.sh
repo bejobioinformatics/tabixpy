@@ -4,6 +4,17 @@
 
 set -xeu
 
+if "1" == "1"; then
+    cd tabixpy/tests
+
+    bash run.sh
+
+    rm -v *.tbj *.tbk *.log *.json
+
+    cd -
+fi
+
+
 rm -rfv build/ dist/ tabixpy.egg-info/ tabixpy-* || true
 
 #python3 -m pip install --user --upgrade setuptools wheel
